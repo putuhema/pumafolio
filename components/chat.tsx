@@ -1,6 +1,13 @@
 "use client";
 
+import { ArrowUpIcon, PlusIcon, SquareIcon } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupTextarea,
+} from "@/components/ui/input-group";
 
 type Role = "user" | "assistant";
 
@@ -13,6 +20,16 @@ const STARTERS = [
   { q: "Is Putu open to new work?", tag: "hiring" },
   { q: "What has he shipped to production?", tag: "work" },
   { q: "Summarize his CV in 3 lines", tag: "cv" },
+];
+
+/** Slash commands. `ask` is sent to Puma; a command without it runs locally. */
+const COMMANDS: { name: string; hint: string; ask?: string }[] = [
+  { name: "projects", hint: "list his work", ask: "What projects has Putu built?" },
+  { name: "stack", hint: "tools he uses", ask: "What is Putu's tech stack?" },
+  { name: "cv", hint: "his CV in 3 lines", ask: "Summarize his CV in 3 lines" },
+  { name: "hire", hint: "is he open to work", ask: "Is Putu open to new work?" },
+  { name: "contact", hint: "email, github", ask: "How can I contact Putu?" },
+  { name: "clear", hint: "clear the conversation" },
 ];
 
 function linkify(text: string) {
@@ -48,17 +65,32 @@ export function ChatDock({
   const [phase, setPhase] = useState<Phase>("idle");
   const [open, setOpen] = useState(false);
   const [palm, setPalm] = useState(false);
+  const [menuIndex, setMenuIndex] = useState(0);
+  const [menuDismissed, setMenuDismissed] = useState(false);
+  // Position in the sent-message history while pressing ↑/↓. null = editing a new draft.
+  const [historyAt, setHistoryAt] = useState<number | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const titleId = useId();
+  const menuId = useId();
   const busy = phase === "thinking" || phase === "talking";
   const canSend = draft.trim().length > 0 && !busy;
   const latestAssistant = [...messages]
     .reverse()
     .find((m) => m.role === "assistant")?.content;
+  const sent = messages.filter((m) => m.role === "user").map((m) => m.content);
+
+  // The command menu shows while the draft is a single "/word" with no space yet.
+  const slash = /^\/(\S*)$/.exec(draft);
+  const matches = slash
+    ? COMMANDS.filter((c) => c.name.startsWith(slash[1]!.toLowerCase()))
+    : [];
+  const menuOpen = matches.length > 0 && !menuDismissed;
+  const activeIndex = Math.min(menuIndex, Math.max(matches.length - 1, 0));
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 879px)");
@@ -71,6 +103,8 @@ export function ChatDock({
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
   }, [messages, phase]);
+
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   useEffect(() => {
     if (!open || !palm) return;
@@ -85,7 +119,7 @@ export function ChatDock({
   useEffect(() => {
     if (embedded) {
       function onKey(event: KeyboardEvent) {
-        if (event.key !== "Escape") return;
+        if (event.key !== "Escape" || event.defaultPrevented) return;
         if (fullscreen) {
           onToggleFullscreen?.();
           return;
@@ -99,13 +133,14 @@ export function ChatDock({
     const dock = document.getElementById("ask-puma");
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") {
+        if (event.defaultPrevented) return;
         setOpen(false);
         launcherRef.current?.focus();
         return;
       }
       if (event.key !== "Tab" || !dock) return;
       const items = dock.querySelectorAll<HTMLElement>(
-        "button, input, a[href], textarea",
+        "button:not(:disabled), input, a[href], textarea",
       );
       if (items.length === 0) return;
       const first = items[0]!;
@@ -122,21 +157,60 @@ export function ChatDock({
     return () => document.removeEventListener("keydown", onKey);
   }, [embedded, fullscreen, onHide, onToggleFullscreen, open, palm]);
 
+  function editDraft(value: string) {
+    setDraft(value);
+    setMenuIndex(0);
+    setMenuDismissed(false);
+    setHistoryAt(null);
+  }
+
+  function stop() {
+    abortRef.current?.abort();
+  }
+
+  function runCommand(name: string) {
+    const command = COMMANDS.find((c) => c.name === name);
+    if (!command) return;
+    editDraft("");
+    if (command.ask) {
+      void send(command.ask);
+      return;
+    }
+    if (command.name === "clear") {
+      stop();
+      setMessages([]);
+      setPhase("idle");
+    }
+    inputRef.current?.focus();
+  }
+
+  function submit() {
+    const exact = /^\/(\S+)\s*$/.exec(draft.trim());
+    if (exact && COMMANDS.some((c) => c.name === exact[1]!.toLowerCase())) {
+      runCommand(exact[1]!.toLowerCase());
+      return;
+    }
+    void send(draft);
+  }
+
   async function send(text: string) {
     const content = text.trim();
     if (!content || busy) return;
-    setDraft("");
+    editDraft("");
     const history = [...messages, { role: "user" as const, content }].slice(
       -6,
     );
     setMessages([...messages, { role: "user", content }]);
     setPhase("thinking");
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: history }),
+        signal: controller.signal,
       });
 
       const type = res.headers.get("content-type") ?? "";
@@ -176,20 +250,26 @@ export function ChatDock({
       }
       setPhase("idle");
     } catch (error) {
-      const message =
-        error instanceof TypeError
+      const stopped = controller.signal.aborted;
+      const message = stopped
+        ? "(stopped)"
+        : error instanceof TypeError
           ? "Puma couldn't reach the model. Try again in a bit."
           : error instanceof Error && error.message
             ? error.message
             : "Puma couldn't answer just now.";
       setPhase("idle");
       setMessages((current) => {
+        // /clear aborts too; don't bring back a cleared conversation.
+        if (current.length === 0) return current;
         const copy = current.slice();
         const last = copy[copy.length - 1];
         if (last?.role === "assistant" && last.content.trim()) {
           copy[copy.length - 1] = {
             role: "assistant",
-            content: `${last.content}\n\n${message}`,
+            content: stopped
+              ? `${last.content} ${message}`
+              : `${last.content}\n\n${message}`,
           };
         } else if (last?.role === "assistant") {
           copy[copy.length - 1] = { role: "assistant", content: message };
@@ -198,6 +278,70 @@ export function ChatDock({
         }
         return copy;
       });
+    } finally {
+      if (abortRef.current === controller) abortRef.current = null;
+    }
+  }
+
+  function onComposerKey(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.nativeEvent.isComposing) return;
+
+    if (menuOpen) {
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        const step = event.key === "ArrowDown" ? 1 : -1;
+        setMenuIndex((activeIndex + step + matches.length) % matches.length);
+        return;
+      }
+      if (event.key === "Tab" || (event.key === "Enter" && !event.shiftKey)) {
+        event.preventDefault();
+        runCommand(matches[activeIndex]!.name);
+        return;
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setMenuDismissed(true);
+        return;
+      }
+    }
+
+    if (event.key === "Escape" && busy) {
+      event.preventDefault();
+      stop();
+      return;
+    }
+
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      formRef.current?.requestSubmit();
+      return;
+    }
+
+    // ↑/↓ walk through what you've sent, like a shell, when the caret is at the edge.
+    const el = event.currentTarget;
+    if (event.key === "ArrowUp" && sent.length > 0) {
+      const atTop = !el.value.slice(0, el.selectionStart).includes("\n");
+      if (!atTop || (historyAt === null && el.value.trim() !== "")) return;
+      event.preventDefault();
+      const next = historyAt === null ? sent.length - 1 : Math.max(historyAt - 1, 0);
+      setHistoryAt(next);
+      setDraft(sent[next]!);
+      setMenuDismissed(true);
+      return;
+    }
+    if (event.key === "ArrowDown" && historyAt !== null) {
+      const atBottom = !el.value.slice(el.selectionEnd).includes("\n");
+      if (!atBottom) return;
+      event.preventDefault();
+      const next = historyAt + 1;
+      if (next >= sent.length) {
+        setHistoryAt(null);
+        setDraft("");
+      } else {
+        setHistoryAt(next);
+        setDraft(sent[next]!);
+      }
+      setMenuDismissed(true);
     }
   }
 
@@ -295,38 +439,111 @@ export function ChatDock({
         className="ask"
         onSubmit={(event) => {
           event.preventDefault();
-          void send(draft);
+          submit();
         }}
       >
+        {menuOpen ? (
+          <ul className="slash-menu" id={menuId} role="listbox" aria-label="Commands">
+            {matches.map((command, i) => (
+              <li
+                key={command.name}
+                id={`${menuId}-${command.name}`}
+                role="option"
+                aria-selected={i === activeIndex}
+                className="slash-item"
+                onMouseEnter={() => setMenuIndex(i)}
+                onMouseDown={(event) => {
+                  // Keep focus in the textarea.
+                  event.preventDefault();
+                  runCommand(command.name);
+                }}
+              >
+                <code>/{command.name}</code>
+                <span>{command.hint}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
         <label className="sr-only" htmlFor="ask-input">
           Ask puma
         </label>
-        <textarea
-          id="ask-input"
-          ref={inputRef}
-          value={draft}
-          maxLength={500}
-          placeholder="ask anything_"
-          autoComplete="off"
-          disabled={busy}
-          rows={1}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              formRef.current?.requestSubmit();
+        <InputGroup className="ask-group">
+          <InputGroupAddon align="inline-start" className="ask-addon">
+            <InputGroupButton
+              size="icon-sm"
+              className="ask-icon ask-plus rounded-full"
+              aria-label="Show commands"
+              onClick={() => {
+                editDraft("/");
+                inputRef.current?.focus();
+              }}
+            >
+              <PlusIcon />
+            </InputGroupButton>
+          </InputGroupAddon>
+          <InputGroupTextarea
+            id="ask-input"
+            ref={inputRef}
+            value={draft}
+            maxLength={500}
+            placeholder="Type / for commands"
+            autoComplete="off"
+            rows={1}
+            role="combobox"
+            aria-expanded={menuOpen}
+            aria-controls={menuOpen ? menuId : undefined}
+            aria-autocomplete="list"
+            aria-activedescendant={
+              menuOpen ? `${menuId}-${matches[activeIndex]!.name}` : undefined
             }
-          }}
-          className="ask-textarea"
-        />
-        <button
-          type="submit"
-          className="ask-send"
-          disabled={!canSend}
-          aria-label="Send"
-        >
-          ↵
-        </button>
+            onChange={(event) => editDraft(event.target.value)}
+            onKeyDown={onComposerKey}
+            className="ask-textarea"
+          />
+          <InputGroupAddon align="inline-end" className="ask-addon">
+            {busy ? (
+              <InputGroupButton
+                size="icon-sm"
+                variant="default"
+                className="ask-icon rounded-full"
+                aria-label="Stop answer"
+                onClick={stop}
+              >
+                <SquareIcon className="size-3 fill-current" />
+              </InputGroupButton>
+            ) : (
+              <InputGroupButton
+                type="submit"
+                size="icon-sm"
+                variant="default"
+                className="ask-icon rounded-full"
+                disabled={!canSend}
+                aria-label="Send"
+              >
+                <ArrowUpIcon />
+              </InputGroupButton>
+            )}
+          </InputGroupAddon>
+        </InputGroup>
+
+        <div className="ask-foot">
+          <span>
+            <kbd>↵</kbd> send · <kbd>⇧↵</kbd> new line
+          </span>
+          <span className="ask-status" aria-hidden="true">
+            {busy ? (
+              <>
+                esc to stop
+                <span className="ask-spinner" />
+              </>
+            ) : embedded ? (
+              "esc to hide"
+            ) : (
+              "esc to close"
+            )}
+          </span>
+        </div>
       </form>
     </aside>
   );
