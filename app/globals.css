@@ -1,0 +1,568 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #fafaf8;
+  --color-ink: #141414;
+  --color-puma: #c19a6b;
+  --font-mono: var(--font-plex), ui-monospace, "SFMono-Regular", Menlo, Consolas,
+    monospace;
+}
+
+:root {
+  color-scheme: light;
+  --paper: #fafaf8;
+  --ink: #141414;
+  --line: #c8c8c2;
+  --muted: #8d8d86;
+}
+
+html {
+  background: var(--paper);
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15.5px;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: #c19a6b;
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 1px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.skip {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  background: var(--paper);
+  padding: 0.35rem 0.6rem;
+  z-index: 60;
+}
+
+.skip:focus {
+  top: 1rem;
+}
+
+.shell {
+  width: min(1040px, calc(100% - 2.5rem));
+  margin: 0 auto;
+  min-height: 100dvh;
+}
+
+.profile {
+  padding: clamp(3.25rem, 11vh, 7.5rem) 0 6.5rem;
+}
+
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.tagline {
+  max-width: 36rem;
+  margin: 1.15rem 0 0;
+}
+
+h2 {
+  margin: 0 0 0.95rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.work,
+.stack {
+  margin-top: 2.85rem;
+}
+
+.work ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.45rem;
+}
+
+.work p {
+  margin: 0;
+  max-width: 42rem;
+}
+
+.view {
+  display: inline-block;
+  margin-top: 0.4rem;
+  color: inherit;
+  text-underline-offset: 3px;
+}
+
+a.view {
+  text-decoration-thickness: 1px;
+}
+
+.view.pending {
+  opacity: 0.42;
+  text-decoration: none;
+  cursor: default;
+}
+
+.stack p {
+  margin: 0;
+  max-width: 40rem;
+}
+
+.foot {
+  margin-top: 3.4rem;
+}
+
+.foot a,
+.profile a {
+  color: inherit;
+  text-underline-offset: 3px;
+}
+
+.sep {
+  margin: 0 0.35rem;
+}
+
+.foot .pending {
+  opacity: 0.42;
+  cursor: default;
+}
+
+.dock {
+  display: none;
+}
+
+.launcher {
+  display: inline-flex;
+  position: fixed;
+  right: 1.1rem;
+  bottom: 1.1rem;
+  z-index: 35;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  padding: 0.35rem 0.75rem 0.35rem 0.4rem;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.scrim {
+  display: none;
+}
+
+.dock-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dock-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.dock-close {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.2rem 0.15rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.log {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 1.05rem;
+  padding: 1.6rem 0 1rem;
+}
+
+.msg {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.msg a {
+  color: inherit;
+}
+
+.gt {
+  white-space: pre;
+}
+
+.think-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+}
+
+.think-ellipsis {
+  margin: 0;
+  letter-spacing: 0.08em;
+}
+
+.ask {
+  position: relative;
+  margin-top: auto;
+}
+
+.peek {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% - 10px);
+  width: 132px;
+  height: 92px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.peek .puma {
+  position: absolute;
+  right: 0;
+  bottom: -58px;
+}
+
+.ask-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.75rem 7.6rem 0.45rem 0;
+  border: 0;
+  border-bottom: 1px solid var(--ink);
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  appearance: none;
+}
+
+.ask-input::placeholder {
+  color: var(--muted);
+}
+
+.ask-input:focus-visible {
+  outline: none;
+  border-bottom-width: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.noscript {
+  margin-top: 2rem;
+}
+
+.not-found {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.8rem;
+  width: min(40rem, calc(100% - 2.5rem));
+  margin: 0 auto;
+}
+
+.not-found h1,
+.not-found p {
+  margin: 0;
+}
+
+@media (max-width: 879px) {
+  .dock {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    height: min(78dvh, 680px);
+    padding: 0.85rem 1.15rem calc(1rem + env(safe-area-inset-bottom));
+    background: var(--paper);
+    border-top: 1px solid var(--ink);
+    transform: translateY(110%);
+    transition: transform 220ms ease;
+  }
+
+  .dock[data-open="true"] {
+    transform: translateY(0);
+  }
+
+  .scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    border: 0;
+    background: rgba(20, 20, 20, 0.18);
+    cursor: pointer;
+  }
+
+  .scrim[hidden] {
+    display: none;
+  }
+}
+
+@media (min-width: 880px) {
+  .shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1.12fr) minmax(280px, 0.92fr);
+    width: min(1080px, calc(100% - 4rem));
+  }
+
+  .profile {
+    padding: clamp(4.5rem, 12vh, 8rem) 2.75rem 4rem 0.25rem;
+  }
+
+  .dock {
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    min-height: 100dvh;
+    padding: clamp(4.5rem, 12vh, 8rem) 0.25rem 1.4rem 2.4rem;
+    border-left: 1px solid var(--line);
+    transform: none;
+  }
+
+  .launcher,
+  .dock-close,
+  .scrim {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock {
+    transition: none;
+  }
+}
+
+/* Puma motion. The tan shape is the only color on the page. */
+.puma .ear,
+.puma .eyes,
+.puma .mouth-open,
+.puma .dot,
+.puma .bulb,
+.puma .zzz {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.puma .ear {
+  transform-origin: 50% 100%;
+}
+
+.puma .eyes-up {
+  transform: translateY(-7px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .puma[data-expression="idle"] .ear-r,
+  .puma[data-expression="happy"] .ear-r {
+    animation: puma-ear 4.8s ease-in-out infinite;
+  }
+
+  .puma[data-expression="listening"] .ear-l {
+    animation: puma-ear-l 1.6s ease-in-out infinite;
+  }
+
+  .puma[data-expression="listening"] .ear-r {
+    animation: puma-ear-r 1.6s ease-in-out infinite;
+  }
+
+  .puma[data-expression="confused"] .ear-l {
+    transform: rotate(58deg) translate(2px, 6px);
+    transform-origin: 80% 90%;
+  }
+
+  .puma[data-expression="idle"] .eyes,
+  .puma[data-expression="happy"] .eyes,
+  .puma[data-expression="listening"] .eyes {
+    animation: puma-blink 5.4s infinite;
+  }
+
+  .puma[data-expression="talking"] .mouth-open {
+    animation: puma-mouth 0.28s ease-in-out infinite;
+    transform-origin: center;
+  }
+
+  .puma[data-expression="thinking"] .dot {
+    animation: puma-dot 0.9s ease-in-out infinite;
+  }
+
+  .puma[data-expression="thinking"] .dot:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+
+  .puma[data-expression="thinking"] .dot:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+
+  .puma[data-expression="idea"] .bulb {
+    animation: puma-bulb 1.4s ease-in-out infinite;
+    transform-origin: 168px 48px;
+  }
+
+  .puma[data-expression="sleepy"] .zzz {
+    animation: puma-zzz 2.2s ease-in-out infinite;
+  }
+
+  .think-ellipsis {
+    animation: puma-dot 1s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .puma[data-expression="confused"] .ear-l {
+    transform: rotate(58deg);
+    transform-origin: 80% 90%;
+  }
+
+  .puma[data-expression="listening"] .ear-l {
+    transform: translateY(-6px) rotate(-12deg);
+  }
+
+  .puma[data-expression="listening"] .ear-r {
+    transform: translateY(-6px) rotate(12deg);
+  }
+}
+
+@keyframes puma-ear {
+  0%,
+  62%,
+  100% {
+    transform: rotate(0deg);
+  }
+  74% {
+    transform: rotate(-12deg);
+  }
+  84% {
+    transform: rotate(8deg);
+  }
+  92% {
+    transform: rotate(-4deg);
+  }
+}
+
+@keyframes puma-ear-l {
+  0%,
+  100% {
+    transform: translateY(-7px) rotate(-14deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(-18deg);
+  }
+}
+
+@keyframes puma-ear-r {
+  0%,
+  100% {
+    transform: translateY(-7px) rotate(14deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(20deg);
+  }
+}
+
+@keyframes puma-blink {
+  0%,
+  44%,
+  50%,
+  100% {
+    transform: scaleY(1);
+  }
+  47% {
+    transform: scaleY(0.08);
+  }
+}
+
+@keyframes puma-mouth {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  45% {
+    transform: scaleY(0.22);
+  }
+}
+
+@keyframes puma-dot {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes puma-bulb {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes puma-zzz {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(2px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-6px);
+  }
+}
