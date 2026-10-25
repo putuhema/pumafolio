@@ -1,10 +1,17 @@
 import { ImageResponse } from "next/og";
-import { BODY, EAR_L, EAR_R, INK, SMILE, TAIL, TAN } from "@/components/puma-paths";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 
-export default function AppleIcon() {
+const bold = readFile(
+  join(process.cwd(), "fonts/ibm-plex-mono-latin-700-normal.woff"),
+);
+
+export default async function AppleIcon() {
+  const data = await bold;
+
   return new ImageResponse(
     (
       <div
@@ -15,25 +22,18 @@ export default function AppleIcon() {
           alignItems: "center",
           justifyContent: "center",
           background: "#fafaf8",
+          color: "#141414",
+          fontSize: 96,
+          fontWeight: 700,
+          fontFamily: "IBM Plex Mono",
         }}
       >
-        <svg width="150" height="172" viewBox="20 0 160 210">
-          <path fill={TAN} d={TAIL} />
-          <path fill={TAN} d={EAR_L} />
-          <path fill={TAN} d={EAR_R} />
-          <path fill={TAN} d={BODY} />
-          <circle cx="76" cy="112" r="6" fill={INK} />
-          <circle cx="124" cy="112" r="6" fill={INK} />
-          <path
-            d={SMILE}
-            fill="none"
-            stroke={INK}
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-        </svg>
+        P
       </div>
     ),
-    { ...size },
+    {
+      ...size,
+      fonts: [{ name: "IBM Plex Mono", data, weight: 700, style: "normal" }],
+    },
   );
 }

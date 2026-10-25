@@ -3,7 +3,6 @@
 @theme {
   --color-paper: #fafaf8;
   --color-ink: #141414;
-  --color-puma: #c19a6b;
   --font-mono: var(--font-plex), ui-monospace, "SFMono-Regular", Menlo, Consolas,
     monospace;
 }
@@ -31,7 +30,7 @@ body {
 }
 
 ::selection {
-  background: #c19a6b;
+  background: #deded8;
   color: var(--ink);
 }
 
@@ -160,7 +159,7 @@ a.view {
   align-items: center;
   gap: 0.45rem;
   min-height: 44px;
-  padding: 0.35rem 0.75rem 0.35rem 0.4rem;
+  padding: 0.45rem 0.8rem;
   border: 1px solid var(--ink);
   background: var(--paper);
   color: inherit;
@@ -225,13 +224,6 @@ a.view {
   white-space: pre;
 }
 
-.think-block {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.2rem;
-}
-
 .think-ellipsis {
   margin: 0;
   letter-spacing: 0.08em;
@@ -242,27 +234,11 @@ a.view {
   margin-top: auto;
 }
 
-.peek {
-  position: absolute;
-  right: -8px;
-  bottom: calc(100% - 6px);
-  width: 210px;
-  height: 196px;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.peek-puma {
-  position: absolute;
-  right: 0;
-  bottom: -46px;
-}
-
 .ask-input {
   width: 100%;
   box-sizing: border-box;
   margin: 0;
-  padding: 0.85rem 0.15rem 0.5rem 0;
+  padding: 0.65rem 0 0.45rem;
   border: 0;
   border-bottom: 1px solid var(--ink);
   border-radius: 0;
@@ -381,188 +357,5 @@ a.view {
 @media (prefers-reduced-motion: reduce) {
   .dock {
     transition: none;
-  }
-}
-
-/* Puma motion. The tan shape is the only color on the page. */
-.puma .ear,
-.puma .eyes,
-.puma .mouth-open,
-.puma .dot,
-.puma .bulb,
-.puma .zzz {
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-.puma .ear {
-  transform-origin: 50% 100%;
-}
-
-.puma .eyes-up {
-  transform: translateY(-14px);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .puma[data-expression="idle"] .ear-r,
-  .puma[data-expression="happy"] .ear-r {
-    animation: puma-ear 4.8s ease-in-out infinite;
-  }
-
-  .puma[data-expression="listening"] .ear-l {
-    animation: puma-ear-l 1.6s ease-in-out infinite;
-  }
-
-  .puma[data-expression="listening"] .ear-r {
-    animation: puma-ear-r 1.6s ease-in-out infinite;
-  }
-
-  .puma[data-expression="confused"] .ear-l {
-    transform: rotate(58deg) translate(2px, 6px);
-    transform-origin: 80% 90%;
-  }
-
-  .puma[data-expression="idle"] .eyes,
-  .puma[data-expression="happy"] .eyes,
-  .puma[data-expression="listening"] .eyes {
-    animation: puma-blink 5.4s infinite;
-  }
-
-  .puma[data-expression="talking"] .mouth-open {
-    animation: puma-mouth 0.28s ease-in-out infinite;
-    transform-origin: center;
-  }
-
-  .puma[data-expression="thinking"] .dot {
-    animation: puma-dot 0.9s ease-in-out infinite;
-  }
-
-  .puma[data-expression="thinking"] .dot:nth-child(2) {
-    animation-delay: 0.15s;
-  }
-
-  .puma[data-expression="thinking"] .dot:nth-child(3) {
-    animation-delay: 0.3s;
-  }
-
-  .puma[data-expression="idea"] .bulb {
-    animation: puma-bulb 1.4s ease-in-out infinite;
-    transform-origin: 168px 48px;
-  }
-
-  .puma[data-expression="sleepy"] .zzz {
-    animation: puma-zzz 2.2s ease-in-out infinite;
-  }
-
-  .think-ellipsis {
-    animation: puma-dot 1s ease-in-out infinite;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .puma[data-expression="confused"] .ear-l {
-    transform: rotate(58deg);
-    transform-origin: 80% 90%;
-  }
-
-  .puma[data-expression="listening"] .ear-l {
-    transform: translateY(-12px) rotate(-18deg);
-  }
-
-  .puma[data-expression="listening"] .ear-r {
-    transform: translateY(-12px) rotate(18deg);
-  }
-}
-
-@keyframes puma-ear {
-  0%,
-  62%,
-  100% {
-    transform: rotate(0deg);
-  }
-  74% {
-    transform: rotate(-12deg);
-  }
-  84% {
-    transform: rotate(8deg);
-  }
-  92% {
-    transform: rotate(-4deg);
-  }
-}
-
-@keyframes puma-ear-l {
-  0%,
-  100% {
-    transform: translateY(-12px) rotate(-18deg);
-  }
-  50% {
-    transform: translateY(-18px) rotate(-24deg);
-  }
-}
-
-@keyframes puma-ear-r {
-  0%,
-  100% {
-    transform: translateY(-12px) rotate(18deg);
-  }
-  50% {
-    transform: translateY(-18px) rotate(24deg);
-  }
-}
-
-@keyframes puma-blink {
-  0%,
-  44%,
-  50%,
-  100% {
-    transform: scaleY(1);
-  }
-  47% {
-    transform: scaleY(0.08);
-  }
-}
-
-@keyframes puma-mouth {
-  0%,
-  100% {
-    transform: scaleY(1);
-  }
-  45% {
-    transform: scaleY(0.22);
-  }
-}
-
-@keyframes puma-dot {
-  0%,
-  100% {
-    opacity: 0.25;
-    transform: translateY(0);
-  }
-  50% {
-    opacity: 1;
-    transform: translateY(-3px);
-  }
-}
-
-@keyframes puma-bulb {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.55;
-  }
-}
-
-@keyframes puma-zzz {
-  0%,
-  100% {
-    opacity: 0.35;
-    transform: translateY(2px);
-  }
-  50% {
-    opacity: 1;
-    transform: translateY(-6px);
   }
 }

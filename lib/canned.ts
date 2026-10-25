@@ -77,7 +77,7 @@ const topics: Topic[] = [
     keys: ["mascot", "field station", "mr. p", "mr p", "who are you", "what are you"],
     mood: "idea",
     answer:
-      "I'm Puma, the mascot on this page. Putu also built a different site called Field Station P-4, a CRT-style portfolio with a 3D host named Mr. P: https://github.com/putuhema/puma",
+      "I'm the assistant on this page. Putu also built a different site called Field Station P-4, a CRT-style portfolio with a 3D host named Mr. P: https://github.com/putuhema/puma",
   },
   {
     id: "remote",

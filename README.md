@@ -1,6 +1,6 @@
 # Putu Mahendra
 
-Personal site for Putu Mahendra, a full-stack and AI engineer in Mamuju, Indonesia. Off-white page, monospace type, and one tan mascot. The right-hand column is Puma, a chatbot that only answers from `content/about.md`.
+Personal site for Putu Mahendra, a full-stack and AI engineer in Mamuju, Indonesia. Off-white page, monospace type. The right-hand column is a chatbot that only answers from `content/about.md`.
 
 ## Stack
 
@@ -76,7 +76,3 @@ Links that are still unknown live in `lib/site.ts`:
 - TODO: email display (currently the address on the CV)
 - TODO: CV PDF link (`site.cv.href`)
 - TODO: view URLs for rsud-hadir and kasirku (both private / unpublished)
-
-## Puma
-
-`components/puma.tsx` is an inline SVG. Expressions: idle, happy, listening (input focused), thinking (waiting on the model), talking (streaming), idea (after an on-topic answer), confused (errors), sleepy (45s idle). Motion is squash-and-stretch (Framer Motion) plus blink, ear wiggle, and mouth (CSS). `prefers-reduced-motion` keeps the pose and drops the loops.

@@ -1,9 +1,8 @@
 import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { BODY, EAR_L, EAR_R, INK, SMILE, TAIL, TAN } from "@/components/puma-paths";
 
-export const alt = "Putu Mahendra, with a tan puma mascot";
+export const alt = "Putu Mahendra, full-stack and AI engineer";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -24,43 +23,19 @@ export default async function OpenGraphImage() {
           width: "100%",
           height: "100%",
           display: "flex",
-          alignItems: "center",
+          flexDirection: "column",
+          justifyContent: "center",
           background: "#fafaf8",
           color: "#141414",
-          padding: "72px 80px",
-          gap: 64,
+          padding: "80px 88px",
+          fontFamily: "IBM Plex Mono",
         }}
       >
-        <svg width="280" height="322" viewBox="0 0 200 230">
-          <path fill={TAN} d={TAIL} />
-          <path fill={TAN} d={EAR_L} />
-          <path fill={TAN} d={EAR_R} />
-          <path fill={TAN} d={BODY} />
-          <circle cx="76" cy="112" r="6" fill={INK} />
-          <circle cx="124" cy="112" r="6" fill={INK} />
-          <path fill={INK} d="M100 134 L96.2 141.2 Q100 144 103.8 141.2 Z" />
-          <path
-            d={SMILE}
-            fill="none"
-            stroke={INK}
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-        </svg>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 18,
-            maxWidth: 680,
-          }}
-        >
-          <div style={{ fontSize: 68, fontWeight: 700, letterSpacing: -1 }}>
-            Putu Mahendra
-          </div>
-          <div style={{ fontSize: 32, lineHeight: 1.4 }}>
-            Full-stack & AI engineer. I build safe AI tools for hospital data.
-          </div>
+        <div style={{ fontSize: 72, fontWeight: 700, letterSpacing: -1 }}>
+          Putu Mahendra
+        </div>
+        <div style={{ fontSize: 32, lineHeight: 1.45, marginTop: 28, maxWidth: 860 }}>
+          Full-stack & AI engineer. I build safe AI tools for hospital data.
         </div>
       </div>
     ),

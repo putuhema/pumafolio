@@ -1,15 +1,12 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { Puma, type PumaExpression } from "./puma";
 
 type Role = "user" | "assistant";
 
 type Msg = { role: Role; content: string };
 
-type Phase = "idle" | "thinking" | "talking" | "idea" | "error";
-
-const SLEEP_AFTER_MS = 45_000;
+type Phase = "idle" | "thinking" | "talking";
 
 function linkify(text: string) {
   const parts = text.split(/(https?:\/\/[^\s]+)/g);
@@ -28,38 +25,18 @@ function linkify(text: string) {
   });
 }
 
-function expressionFor(
-  phase: Phase,
-  focused: boolean,
-  asleep: boolean,
-): PumaExpression {
-  if (phase === "error") return "confused";
-  if (phase === "thinking") return "thinking";
-  if (phase === "talking") return "talking";
-  // Idea is a short beat after an answer. The field usually stays focused,
-  // so this has to win over listening or the face never changes.
-  if (phase === "idea") return "idea";
-  if (focused) return "listening";
-  if (asleep) return "sleepy";
-  return "idle";
-}
-
 export function ChatDock() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [draft, setDraft] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
-  const [focused, setFocused] = useState(false);
-  const [asleep, setAsleep] = useState(false);
   const [open, setOpen] = useState(false);
   const [palm, setPalm] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
-  const lastActive = useRef(0);
   const titleId = useId();
   const busy = phase === "thinking" || phase === "talking";
-  const expression = expressionFor(phase, focused, asleep);
   const latestAssistant = [...messages]
     .reverse()
     .find((m) => m.role === "assistant")?.content;
@@ -71,29 +48,6 @@ export function ChatDock() {
     mq.addEventListener("change", apply);
     return () => mq.removeEventListener("change", apply);
   }, []);
-
-  useEffect(() => {
-    lastActive.current = Date.now();
-    const bump = () => {
-      lastActive.current = Date.now();
-      setAsleep(false);
-    };
-    const events = ["pointerdown", "keydown"] as const;
-    events.forEach((name) => window.addEventListener(name, bump));
-    const id = window.setInterval(() => {
-      if (Date.now() - lastActive.current >= SLEEP_AFTER_MS) setAsleep(true);
-    }, 1000);
-    return () => {
-      events.forEach((name) => window.removeEventListener(name, bump));
-      window.clearInterval(id);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (phase !== "idea") return;
-    const id = window.setTimeout(() => setPhase("idle"), 1800);
-    return () => window.clearTimeout(id);
-  }, [phase]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
@@ -140,8 +94,6 @@ export function ChatDock() {
   async function send(text: string) {
     const content = text.trim();
     if (!content || busy) return;
-    lastActive.current = Date.now();
-    setAsleep(false);
     setDraft("");
     const history = [...messages, { role: "user" as const, content }].slice(
       -6,
@@ -162,7 +114,6 @@ export function ChatDock() {
         throw new Error(data.error || "Puma couldn't answer just now.");
       }
 
-      const mood = res.headers.get("X-Puma-Mood");
       const reader = res.body?.getReader();
       if (!reader) throw new Error("Puma couldn't answer just now.");
       const decoder = new TextDecoder();
@@ -192,8 +143,7 @@ export function ChatDock() {
       if (!acc.trim()) {
         throw new Error("Puma didn't come back with anything. Try again.");
       }
-      const declined = /^\s*That's outside what I know about Putu/.test(acc);
-      setPhase(mood === "idle" || declined ? "idle" : "idea");
+      setPhase("idle");
     } catch (error) {
       const message =
         error instanceof TypeError
@@ -201,7 +151,7 @@ export function ChatDock() {
           : error instanceof Error && error.message
             ? error.message
             : "Puma couldn't answer just now.";
-      setPhase("error");
+      setPhase("idle");
       setMessages((current) => {
         const copy = current.slice();
         const last = copy[copy.length - 1];
@@ -233,7 +183,6 @@ export function ChatDock() {
         id="ask-puma"
         className="dock"
         data-open={open ? "true" : "false"}
-        data-expression={expression}
         role={palm && open ? "dialog" : "complementary"}
         aria-modal={palm && open ? true : undefined}
         aria-labelledby={titleId}
@@ -242,7 +191,6 @@ export function ChatDock() {
         <header className="dock-head">
           <h2 id={titleId} className="dock-title">
             ask puma
-            <Puma expression={expression} size={46} />
           </h2>
           <button
             type="button"
@@ -272,13 +220,9 @@ export function ChatDock() {
             ) : null,
           )}
           {phase === "thinking" ? (
-            <div className="think-block">
-              <p className="think-ellipsis" aria-hidden="true">
-                ...
-              </p>
-              <Puma expression="thinking" size={54} />
-              <span className="sr-only">Puma is thinking</span>
-            </div>
+            <p className="think-ellipsis" aria-hidden="true">
+              ...
+            </p>
           ) : null}
           <div ref={endRef} />
         </div>
@@ -293,9 +237,6 @@ export function ChatDock() {
             void send(draft);
           }}
         >
-          <div className="peek" aria-hidden="true">
-            <Puma className="peek-puma" expression={expression} size={190} />
-          </div>
           <label className="sr-only" htmlFor="ask-input">
             Ask puma
           </label>
@@ -309,12 +250,6 @@ export function ChatDock() {
             autoComplete="off"
             enterKeyHint="send"
             onChange={(event) => setDraft(event.target.value)}
-            onFocus={() => {
-              setFocused(true);
-              lastActive.current = Date.now();
-              setAsleep(false);
-            }}
-            onBlur={() => setFocused(false)}
           />
           <button type="submit" className="sr-only" disabled={busy}>
             Send
@@ -330,7 +265,6 @@ export function ChatDock() {
         aria-controls="ask-puma"
         onClick={() => setOpen(true)}
       >
-        <Puma expression="idle" size={32} />
         ask puma
       </button>
     </>

@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
     "/api/chat": ["./content/about.md"],
     "/opengraph-image": ["./fonts/**/*"],
     "/twitter-image": ["./fonts/**/*"],
+    "/icon": ["./fonts/**/*"],
+    "/apple-icon": ["./fonts/**/*"],
   },
   async headers() {
     return [

@@ -1,5 +1,4 @@
 import { ChatDock } from "@/components/chat";
-import { Puma } from "@/components/puma";
 import { site } from "@/lib/site";
 
 const jsonLd = {
@@ -41,7 +40,6 @@ export default function Home() {
         <main className="profile">
           <header className="name-row">
             <h1>{site.name}</h1>
-            <Puma expression="happy" size={58} title="Puma" />
           </header>
           <p className="tagline">{site.tagline}</p>
 

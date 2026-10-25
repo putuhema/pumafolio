@@ -110,7 +110,7 @@ A different personal site, styled as a CRT television, with a 3D host named Mr. 
 
 Stack: Next.js 16, React 19, Convex, Three.js, MDX, Tailwind CSS, Web Audio. It streams LLM replies that can mount live UI (a dossier, project shelf, contact form, and game) and falls back to an offline phrasebook. Real-time chat, guestbook, and high scores on Convex. Keyboard-first, plus a printable recruiter page.
 
-This portfolio (the page you are on) is a separate, newer site. Its mascot is also called Puma: a flat tan bean-shaped cat. Do not confuse the two.
+This portfolio (the page you are on) is a separate, newer site. It has no mascot. Do not describe one, and do not confuse it with Field Station P-4.
 
 ## Other projects
 
