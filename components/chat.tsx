@@ -1,26 +1,19 @@
 "use client";
 
-import {
-  ArrowUpIcon,
-  Maximize2Icon,
-  Minimize2Icon,
-  PanelRightCloseIcon,
-  XIcon,
-} from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupTextarea,
-} from "@/components/ui/input-group";
 
 type Role = "user" | "assistant";
 
 type Msg = { role: Role; content: string };
 
 type Phase = "idle" | "thinking" | "talking";
+
+const STARTERS = [
+  { q: "How does simha keep hospital data safe?", tag: "project" },
+  { q: "Is Putu open to new work?", tag: "hiring" },
+  { q: "What has he shipped to production?", tag: "work" },
+  { q: "Summarize his CV in 3 lines", tag: "cv" },
+];
 
 function linkify(text: string) {
   const parts = text.split(/(https?:\/\/[^\s]+)/g);
@@ -220,42 +213,58 @@ export function ChatDock({
       inert={palm && !open ? true : undefined}
     >
       <header className="dock-head">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          className="dock-close"
-          aria-label={embedded ? "Hide chat" : "Close chat"}
-          onClick={() => {
-            if (embedded) {
-              onHide?.();
-              return;
-            }
-            setOpen(false);
-            launcherRef.current?.focus();
-          }}
-        >
-          {embedded ? <PanelRightCloseIcon /> : <XIcon />}
-        </Button>
         <h2 id={titleId} className="dock-title">
+          <span className="dock-dot" aria-hidden="true" />
           ask puma
         </h2>
-        {embedded && onToggleFullscreen ? (
-          <Button
+        <div className="dock-actions">
+          {embedded && onToggleFullscreen ? (
+            <button
+              type="button"
+              className="txtbtn"
+              aria-pressed={fullscreen}
+              onClick={onToggleFullscreen}
+            >
+              {fullscreen ? "collapse ↙" : "expand ↗"}
+            </button>
+          ) : null}
+          <button
             type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="dock-fullscreen"
-            aria-label={fullscreen ? "Exit fullscreen" : "Fullscreen chat"}
-            aria-pressed={fullscreen}
-            onClick={onToggleFullscreen}
+            className="txtbtn"
+            aria-label={embedded ? "Hide chat" : "Close chat"}
+            onClick={() => {
+              if (embedded) {
+                onHide?.();
+                return;
+              }
+              setOpen(false);
+              launcherRef.current?.focus();
+            }}
           >
-            {fullscreen ? <Minimize2Icon /> : <Maximize2Icon />}
-          </Button>
-        ) : null}
+            {embedded ? "hide" : "close"}
+          </button>
+        </div>
       </header>
 
       <div className="log" ref={logRef}>
+        {messages.length === 0 && phase === "idle" ? (
+          <div className="empty">
+            <p className="empty-lead">
+              Puma knows Putu&apos;s projects, stack and how to reach him.
+              Ask anything, or try one of these:
+            </p>
+            <ul className="starters">
+              {STARTERS.map((item) => (
+                <li key={item.q}>
+                  <button type="button" onClick={() => void send(item.q)}>
+                    <span>{item.q}</span>
+                    <span className="starter-tag">{item.tag}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         {messages.map((msg, i) =>
           msg.role === "user" ? (
             <p className="msg msg-user" key={i}>
@@ -292,38 +301,32 @@ export function ChatDock({
         <label className="sr-only" htmlFor="ask-input">
           Ask puma
         </label>
-        <InputGroup className="ask-group border-0 bg-muted shadow-none ring-0 has-[[data-slot=input-group-control]:focus-visible]:border-0 has-[[data-slot=input-group-control]:focus-visible]:ring-0">
-          <InputGroupTextarea
-            id="ask-input"
-            ref={inputRef}
-            value={draft}
-            maxLength={500}
-            placeholder="ask anything_"
-            autoComplete="off"
-            disabled={busy}
-            rows={1}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                formRef.current?.requestSubmit();
-              }
-            }}
-            className="ask-textarea"
-          />
-          <InputGroupAddon align="block-end" className="ask-actions">
-            <InputGroupButton
-              type="submit"
-              size="icon-sm"
-              variant="default"
-              className="ask-send ml-auto rounded-full border-0"
-              disabled={!canSend}
-              aria-label="Send"
-            >
-              <ArrowUpIcon />
-            </InputGroupButton>
-          </InputGroupAddon>
-        </InputGroup>
+        <textarea
+          id="ask-input"
+          ref={inputRef}
+          value={draft}
+          maxLength={500}
+          placeholder="ask anything_"
+          autoComplete="off"
+          disabled={busy}
+          rows={1}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              formRef.current?.requestSubmit();
+            }
+          }}
+          className="ask-textarea"
+        />
+        <button
+          type="submit"
+          className="ask-send"
+          disabled={!canSend}
+          aria-label="Send"
+        >
+          ↵
+        </button>
       </form>
     </aside>
   );
