@@ -51,6 +51,7 @@ export function FolioShell({ children }: { children: ReactNode }) {
   const chatPanelRef = usePanelRef();
   const launcherRef = useRef<HTMLButtonElement>(null);
   const [chatOpen, setChatOpen] = useState(true);
+  const [fullscreen, setFullscreen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -72,6 +73,7 @@ export function FolioShell({ children }: { children: ReactNode }) {
   }, [chatOpen, hydrated]);
 
   const hideChat = useCallback(() => {
+    setFullscreen(false);
     chatPanelRef.current?.collapse();
     setChatOpen(false);
     requestAnimationFrame(() => launcherRef.current?.focus());
@@ -81,6 +83,10 @@ export function FolioShell({ children }: { children: ReactNode }) {
     chatPanelRef.current?.expand();
     setChatOpen(true);
   }, [chatPanelRef]);
+
+  const toggleFullscreen = useCallback(() => {
+    setFullscreen((current) => !current);
+  }, []);
 
   if (palm) {
     return (
@@ -95,6 +101,7 @@ export function FolioShell({ children }: { children: ReactNode }) {
     <div
       className="shell shell-resizable"
       data-chat={chatOpen ? "open" : "closed"}
+      data-fullscreen={fullscreen ? "true" : "false"}
     >
       <ResizablePanelGroup orientation="horizontal" className="shell-panels">
         <ResizablePanel defaultSize="55%" minSize="32%" className="min-w-0">
@@ -103,7 +110,7 @@ export function FolioShell({ children }: { children: ReactNode }) {
         <ResizableHandle
           withHandle
           className="shell-handle"
-          disabled={!chatOpen}
+          disabled={!chatOpen || fullscreen}
         />
         <ResizablePanel
           id="ask-puma-panel"
@@ -118,8 +125,16 @@ export function FolioShell({ children }: { children: ReactNode }) {
             setChatOpen((prev) => (prev === open ? prev : open));
           }}
         >
-          <div className="h-full" inert={!chatOpen ? true : undefined}>
-            <ChatDock embedded onHide={hideChat} />
+          <div
+            className="h-full w-full"
+            inert={!chatOpen ? true : undefined}
+          >
+            <ChatDock
+              embedded
+              onHide={hideChat}
+              fullscreen={fullscreen}
+              onToggleFullscreen={toggleFullscreen}
+            />
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>

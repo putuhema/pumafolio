@@ -1,7 +1,14 @@
 "use client";
 
-import { ArrowUpIcon } from "lucide-react";
+import {
+  ArrowUpIcon,
+  Maximize2Icon,
+  Minimize2Icon,
+  PanelRightCloseIcon,
+  XIcon,
+} from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   InputGroup,
   InputGroupAddon,
@@ -35,9 +42,13 @@ function linkify(text: string) {
 export function ChatDock({
   embedded = false,
   onHide,
+  fullscreen = false,
+  onToggleFullscreen,
 }: {
   embedded?: boolean;
   onHide?: () => void;
+  fullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [draft, setDraft] = useState("");
@@ -82,6 +93,10 @@ export function ChatDock({
     if (embedded) {
       function onKey(event: KeyboardEvent) {
         if (event.key !== "Escape") return;
+        if (fullscreen) {
+          onToggleFullscreen?.();
+          return;
+        }
         onHide?.();
       }
       document.addEventListener("keydown", onKey);
@@ -112,7 +127,7 @@ export function ChatDock({
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [embedded, onHide, open, palm]);
+  }, [embedded, fullscreen, onHide, onToggleFullscreen, open, palm]);
 
   async function send(text: string) {
     const content = text.trim();
@@ -198,18 +213,19 @@ export function ChatDock({
       id="ask-puma"
       className={embedded ? "dock dock-embedded" : "dock"}
       data-open={open ? "true" : "false"}
+      data-fullscreen={fullscreen ? "true" : "false"}
       role={palm && open ? "dialog" : "complementary"}
       aria-modal={palm && open ? true : undefined}
       aria-labelledby={titleId}
       inert={palm && !open ? true : undefined}
     >
       <header className="dock-head">
-        <h2 id={titleId} className="dock-title">
-          ask puma
-        </h2>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-sm"
           className="dock-close"
+          aria-label={embedded ? "Hide chat" : "Close chat"}
           onClick={() => {
             if (embedded) {
               onHide?.();
@@ -219,8 +235,24 @@ export function ChatDock({
             launcherRef.current?.focus();
           }}
         >
-          {embedded ? "hide" : "close"}
-        </button>
+          {embedded ? <PanelRightCloseIcon /> : <XIcon />}
+        </Button>
+        <h2 id={titleId} className="dock-title">
+          ask puma
+        </h2>
+        {embedded && onToggleFullscreen ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="dock-fullscreen"
+            aria-label={fullscreen ? "Exit fullscreen" : "Fullscreen chat"}
+            aria-pressed={fullscreen}
+            onClick={onToggleFullscreen}
+          >
+            {fullscreen ? <Minimize2Icon /> : <Maximize2Icon />}
+          </Button>
+        ) : null}
       </header>
 
       <div className="log" ref={logRef}>

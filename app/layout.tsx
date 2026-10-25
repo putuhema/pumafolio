@@ -1,28 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import localFont from "next/font/local";
-import { site } from "@/lib/site";
-import "./globals.css";
 import { Geist } from "next/font/google";
+import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
+import "./globals.css";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
-
-const mono = localFont({
-  src: [
-    {
-      path: "../fonts/ibm-plex-mono-latin-400-normal.woff",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../fonts/ibm-plex-mono-latin-700-normal.woff",
-      weight: "700",
-      style: "normal",
-    },
-  ],
-  variable: "--font-plex",
+const geist = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist-sans",
   display: "swap",
-  fallback: ["ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"],
 });
 
 export const metadata: Metadata = {
@@ -72,8 +57,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
-      <body className={mono.className}>{children}</body>
+    <html lang="en" className={cn(geist.variable, "font-sans")}>
+      <body className={geist.className}>{children}</body>
     </html>
   );
 }
