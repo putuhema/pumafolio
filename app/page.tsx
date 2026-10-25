@@ -1,4 +1,4 @@
-import { ChatDock } from "@/components/chat";
+import { FolioShell } from "@/components/folio-shell";
 import { site } from "@/lib/site";
 
 const jsonLd = {
@@ -36,7 +36,7 @@ export default function Home() {
       <a className="skip" href="#work">
         skip to work
       </a>
-      <div className="shell">
+      <FolioShell>
         <main className="profile">
           <header className="name-row">
             <h1>{site.name}</h1>
@@ -102,8 +102,7 @@ export default function Home() {
             </p>
           </noscript>
         </main>
-        <ChatDock />
-      </div>
+      </FolioShell>
     </>
   );
 }

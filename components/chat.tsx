@@ -1,6 +1,13 @@
 "use client";
 
+import { ArrowUpIcon } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupTextarea,
+} from "@/components/ui/input-group";
 
 type Role = "user" | "assistant";
 
@@ -25,18 +32,26 @@ function linkify(text: string) {
   });
 }
 
-export function ChatDock() {
+export function ChatDock({
+  embedded = false,
+  onHide,
+}: {
+  embedded?: boolean;
+  onHide?: () => void;
+}) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [draft, setDraft] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
   const [open, setOpen] = useState(false);
   const [palm, setPalm] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const busy = phase === "thinking" || phase === "talking";
+  const canSend = draft.trim().length > 0 && !busy;
   const latestAssistant = [...messages]
     .reverse()
     .find((m) => m.role === "assistant")?.content;
@@ -64,6 +79,14 @@ export function ChatDock() {
   }, [open, palm]);
 
   useEffect(() => {
+    if (embedded) {
+      function onKey(event: KeyboardEvent) {
+        if (event.key !== "Escape") return;
+        onHide?.();
+      }
+      document.addEventListener("keydown", onKey);
+      return () => document.removeEventListener("keydown", onKey);
+    }
     if (!open || !palm) return;
     const dock = document.getElementById("ask-puma");
     function onKey(event: KeyboardEvent) {
@@ -89,7 +112,7 @@ export function ChatDock() {
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, palm]);
+  }, [embedded, onHide, open, palm]);
 
   async function send(text: string) {
     const content = text.trim();
@@ -170,6 +193,111 @@ export function ChatDock() {
     }
   }
 
+  const dock = (
+    <aside
+      id="ask-puma"
+      className={embedded ? "dock dock-embedded" : "dock"}
+      data-open={open ? "true" : "false"}
+      role={palm && open ? "dialog" : "complementary"}
+      aria-modal={palm && open ? true : undefined}
+      aria-labelledby={titleId}
+      inert={palm && !open ? true : undefined}
+    >
+      <header className="dock-head">
+        <h2 id={titleId} className="dock-title">
+          ask puma
+        </h2>
+        <button
+          type="button"
+          className="dock-close"
+          onClick={() => {
+            if (embedded) {
+              onHide?.();
+              return;
+            }
+            setOpen(false);
+            launcherRef.current?.focus();
+          }}
+        >
+          {embedded ? "hide" : "close"}
+        </button>
+      </header>
+
+      <div className="log" ref={logRef}>
+        {messages.map((msg, i) =>
+          msg.role === "user" ? (
+            <p className="msg msg-user" key={i}>
+              <span className="gt" aria-hidden="true">
+                &gt;{" "}
+              </span>
+              {msg.content}
+            </p>
+          ) : msg.content ? (
+            <p className="msg msg-bot" key={i}>
+              {linkify(msg.content)}
+            </p>
+          ) : null,
+        )}
+        {phase === "thinking" ? (
+          <p className="think-ellipsis" aria-hidden="true">
+            ...
+          </p>
+        ) : null}
+        <div ref={endRef} />
+      </div>
+      <div className="sr-only" aria-live="polite">
+        {phase === "thinking" ? "Puma is thinking" : latestAssistant}
+      </div>
+
+      <form
+        ref={formRef}
+        className="ask"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void send(draft);
+        }}
+      >
+        <label className="sr-only" htmlFor="ask-input">
+          Ask puma
+        </label>
+        <InputGroup className="ask-group border-0 bg-muted shadow-none ring-0 has-[[data-slot=input-group-control]:focus-visible]:border-0 has-[[data-slot=input-group-control]:focus-visible]:ring-0">
+          <InputGroupTextarea
+            id="ask-input"
+            ref={inputRef}
+            value={draft}
+            maxLength={500}
+            placeholder="ask anything_"
+            autoComplete="off"
+            disabled={busy}
+            rows={1}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                formRef.current?.requestSubmit();
+              }
+            }}
+            className="ask-textarea"
+          />
+          <InputGroupAddon align="block-end" className="ask-actions">
+            <InputGroupButton
+              type="submit"
+              size="icon-sm"
+              variant="default"
+              className="ask-send ml-auto rounded-full border-0"
+              disabled={!canSend}
+              aria-label="Send"
+            >
+              <ArrowUpIcon />
+            </InputGroupButton>
+          </InputGroupAddon>
+        </InputGroup>
+      </form>
+    </aside>
+  );
+
+  if (embedded) return dock;
+
   return (
     <>
       <button
@@ -179,84 +307,7 @@ export function ChatDock() {
         aria-label="Close ask puma"
         onClick={() => setOpen(false)}
       />
-      <aside
-        id="ask-puma"
-        className="dock"
-        data-open={open ? "true" : "false"}
-        role={palm && open ? "dialog" : "complementary"}
-        aria-modal={palm && open ? true : undefined}
-        aria-labelledby={titleId}
-        inert={palm && !open ? true : undefined}
-      >
-        <header className="dock-head">
-          <h2 id={titleId} className="dock-title">
-            ask puma
-          </h2>
-          <button
-            type="button"
-            className="dock-close"
-            onClick={() => {
-              setOpen(false);
-              launcherRef.current?.focus();
-            }}
-          >
-            close
-          </button>
-        </header>
-
-        <div className="log" ref={logRef}>
-          {messages.map((msg, i) =>
-            msg.role === "user" ? (
-              <p className="msg msg-user" key={i}>
-                <span className="gt" aria-hidden="true">
-                  &gt;{" "}
-                </span>
-                {msg.content}
-              </p>
-            ) : msg.content ? (
-              <p className="msg msg-bot" key={i}>
-                {linkify(msg.content)}
-              </p>
-            ) : null,
-          )}
-          {phase === "thinking" ? (
-            <p className="think-ellipsis" aria-hidden="true">
-              ...
-            </p>
-          ) : null}
-          <div ref={endRef} />
-        </div>
-        <div className="sr-only" aria-live="polite">
-          {phase === "thinking" ? "Puma is thinking" : latestAssistant}
-        </div>
-
-        <form
-          className="ask"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void send(draft);
-          }}
-        >
-          <label className="sr-only" htmlFor="ask-input">
-            Ask puma
-          </label>
-          <input
-            id="ask-input"
-            ref={inputRef}
-            className="ask-input"
-            value={draft}
-            maxLength={500}
-            placeholder="ask anything_"
-            autoComplete="off"
-            enterKeyHint="send"
-            onChange={(event) => setDraft(event.target.value)}
-          />
-          <button type="submit" className="sr-only" disabled={busy}>
-            Send
-          </button>
-        </form>
-      </aside>
-
+      {dock}
       <button
         type="button"
         className="launcher"

@@ -2,6 +2,10 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { site } from "@/lib/site";
 import "./globals.css";
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const mono = localFont({
   src: [
@@ -68,7 +72,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={mono.variable}>
+    <html lang="en" className={cn("font-sans", geist.variable)}>
       <body className={mono.className}>{children}</body>
     </html>
   );
