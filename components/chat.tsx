@@ -36,8 +36,10 @@ function expressionFor(
   if (phase === "error") return "confused";
   if (phase === "thinking") return "thinking";
   if (phase === "talking") return "talking";
-  if (focused) return "listening";
+  // Idea is a short beat after an answer. The field usually stays focused,
+  // so this has to win over listening or the face never changes.
   if (phase === "idea") return "idea";
+  if (focused) return "listening";
   if (asleep) return "sleepy";
   return "idle";
 }
@@ -194,9 +196,11 @@ export function ChatDock() {
       setPhase(mood === "idle" || declined ? "idle" : "idea");
     } catch (error) {
       const message =
-        error instanceof Error && error.message
-          ? error.message
-          : "Puma couldn't answer just now.";
+        error instanceof TypeError
+          ? "Puma couldn't reach the model. Try again in a bit."
+          : error instanceof Error && error.message
+            ? error.message
+            : "Puma couldn't answer just now.";
       setPhase("error");
       setMessages((current) => {
         const copy = current.slice();
@@ -290,7 +294,7 @@ export function ChatDock() {
           }}
         >
           <div className="peek" aria-hidden="true">
-            <Puma expression={expression} size={168} />
+            <Puma className="peek-puma" expression={expression} size={190} />
           </div>
           <label className="sr-only" htmlFor="ask-input">
             Ask puma

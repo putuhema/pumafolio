@@ -17,7 +17,7 @@ export default function AppleIcon() {
           background: "#fafaf8",
         }}
       >
-        <svg width="150" height="180" viewBox="20 -10 160 230">
+        <svg width="150" height="172" viewBox="20 0 160 210">
           <path fill={TAN} d={TAIL} />
           <path fill={TAN} d={EAR_L} />
           <path fill={TAN} d={EAR_R} />

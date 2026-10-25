@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   poweredByHeader: false,
+  // Dev server is bound to 0.0.0.0; allow the loopback host used in the browser.
+  allowedDevOrigins: ["127.0.0.1"],
   outputFileTracingIncludes: {
     "/api/chat": ["./content/about.md"],
     "/opengraph-image": ["./fonts/**/*"],

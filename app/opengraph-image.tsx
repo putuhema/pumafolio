@@ -31,7 +31,7 @@ export default async function OpenGraphImage() {
           gap: 64,
         }}
       >
-        <svg width="280" height="350" viewBox="0 -16 200 250">
+        <svg width="280" height="322" viewBox="0 0 200 230">
           <path fill={TAN} d={TAIL} />
           <path fill={TAN} d={EAR_L} />
           <path fill={TAN} d={EAR_R} />

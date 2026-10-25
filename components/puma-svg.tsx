@@ -28,7 +28,7 @@ type Props = {
 };
 
 const VB_W = 200;
-const VB_H = 250;
+const VB_H = 230;
 
 function DotEyes({
   r = 5.6,
@@ -120,7 +120,7 @@ function Eyes({ expression }: { expression: PumaExpression }) {
       ) : null}
       {expression === "idle" || expression === "talking" ? <DotEyes /> : null}
       {expression === "listening" ? <DotEyes r={8} /> : null}
-      {expression === "thinking" ? <DotEyes /> : null}
+      {expression === "thinking" ? <DotEyes leftY={96} rightY={96} /> : null}
       {expression === "confused" ? (
         <DotEyes r={5.4} leftY={106} leftR={4.4} />
       ) : null}
@@ -141,10 +141,10 @@ function SittingFace({ expression }: { expression: PumaExpression }) {
 function Extras({ expression }: { expression: PumaExpression }) {
   if (expression === "thinking") {
     return (
-      <g className="dots" fill={INK}>
-        <circle className="dot" cx="150" cy="8" r="3.2" />
-        <circle className="dot" cx="164" cy="2" r="3.2" />
-        <circle className="dot" cx="178" cy="8" r="3.2" />
+        <g className="dots" fill={INK}>
+        <circle className="dot" cx="156" cy="18" r="3.3" />
+        <circle className="dot" cx="170" cy="10" r="3.3" />
+        <circle className="dot" cx="184" cy="18" r="3.3" />
       </g>
     );
   }
@@ -253,7 +253,7 @@ export function PumaSvg({ expression = "idle", size = 120, title }: Props) {
       data-expression={expression}
       width={size}
       height={height}
-      viewBox={`0 -16 ${VB_W} ${VB_H}`}
+      viewBox={`0 0 ${VB_W} ${VB_H}`}
       role={title ? "img" : undefined}
       aria-hidden={title ? undefined : true}
       aria-label={title}

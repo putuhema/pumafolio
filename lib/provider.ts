@@ -105,8 +105,9 @@ export function streamModel(options: {
     maxOutputTokens,
     // Skip temperature on Claude: Haiku 5.5 can reject sampling params while thinking.
     temperature: provider.name === "anthropic" ? undefined : 0.3,
-    // Cheapest reasoning setting the provider will accept (off, or minimum).
-    reasoning: "none",
+    // Gemini and Claude spend tokens on hidden reasoning unless this is off.
+    // Groq rejects the field, so leave it unset there.
+    ...(provider.name === "groq" ? {} : { reasoning: "none" as const }),
     maxRetries: 0,
     timeout: 20_000,
     abortSignal,

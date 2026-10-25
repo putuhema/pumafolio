@@ -194,4 +194,63 @@ describe("chat route", () => {
     assert.match(text, /Simha/);
     assert.doesNotMatch(text, /GEMINI_API_KEY|sk-ant|api[_-]?key/i);
   });
+
+  it("streams a provider response and keeps the key off the wire to the browser", async () => {
+    stashEnv();
+    clearKeys();
+    resetRateLimit();
+    process.env.LLM_PROVIDER = "groq";
+    process.env.LLM_MODEL = "llama-3.1-8b-instant";
+    process.env.GROQ_API_KEY = "gsk-test-secret-value";
+
+    const original = globalThis.fetch;
+    let seenAuth = "";
+    globalThis.fetch = async (input, init) => {
+      const url = String(input instanceof Request ? input.url : input);
+      assert.match(url, /api\.groq\.com\/openai\/v1\/chat\/completions/);
+      const headers = new Headers(
+        input instanceof Request ? input.headers : init?.headers,
+      );
+      seenAuth = headers.get("authorization") ?? "";
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(
+            encoder.encode(
+              'data: {"choices":[{"index":0,"delta":{"content":"Putu built Simha for hospital data."}}]}\n\n',
+            ),
+          );
+          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.close();
+        },
+      });
+      return new Response(stream, {
+        status: 200,
+        headers: { "content-type": "text/event-stream" },
+      });
+    };
+
+    try {
+      const res = await handleChat(
+        new Request("http://localhost/api/chat", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-forwarded-for": "198.51.100.21",
+          },
+          body: JSON.stringify({
+            messages: [{ role: "user", content: "what is simha?" }],
+          }),
+        }),
+      );
+      const text = await res.text();
+      assert.equal(res.status, 200, text);
+      assert.equal(res.headers.get("x-puma-source"), "model");
+      assert.match(text, /Simha/);
+      assert.match(seenAuth, /gsk-test-secret-value/);
+      assert.doesNotMatch(text, /gsk-test-secret-value/);
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
 });

@@ -244,25 +244,25 @@ a.view {
 
 .peek {
   position: absolute;
-  right: 0;
-  bottom: calc(100% - 10px);
-  width: 132px;
-  height: 92px;
+  right: -8px;
+  bottom: calc(100% - 6px);
+  width: 210px;
+  height: 196px;
   overflow: hidden;
   pointer-events: none;
 }
 
-.peek .puma {
+.peek-puma {
   position: absolute;
   right: 0;
-  bottom: -58px;
+  bottom: -46px;
 }
 
 .ask-input {
   width: 100%;
   box-sizing: border-box;
   margin: 0;
-  padding: 0.75rem 7.6rem 0.45rem 0;
+  padding: 0.85rem 0.15rem 0.5rem 0;
   border: 0;
   border-bottom: 1px solid var(--ink);
   border-radius: 0;
@@ -400,7 +400,7 @@ a.view {
 }
 
 .puma .eyes-up {
-  transform: translateY(-7px);
+  transform: translateY(-14px);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -466,11 +466,11 @@ a.view {
   }
 
   .puma[data-expression="listening"] .ear-l {
-    transform: translateY(-6px) rotate(-12deg);
+    transform: translateY(-12px) rotate(-18deg);
   }
 
   .puma[data-expression="listening"] .ear-r {
-    transform: translateY(-6px) rotate(12deg);
+    transform: translateY(-12px) rotate(18deg);
   }
 }
 
@@ -494,20 +494,20 @@ a.view {
 @keyframes puma-ear-l {
   0%,
   100% {
-    transform: translateY(-7px) rotate(-14deg);
+    transform: translateY(-12px) rotate(-18deg);
   }
   50% {
-    transform: translateY(-12px) rotate(-18deg);
+    transform: translateY(-18px) rotate(-24deg);
   }
 }
 
 @keyframes puma-ear-r {
   0%,
   100% {
-    transform: translateY(-7px) rotate(14deg);
+    transform: translateY(-12px) rotate(18deg);
   }
   50% {
-    transform: translateY(-12px) rotate(20deg);
+    transform: translateY(-18px) rotate(24deg);
   }
 }
 

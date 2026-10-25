@@ -2,22 +2,22 @@ export const TAN = "#C19A6B";
 export const INK = "#141414";
 export const PAPER = "#fafaf8";
 
-/** Sitting bean. Wider at the hip, round at the base, no limbs. */
+/** Plump bean, wider through the hip. */
 export const BODY =
-  "M100 52C66 50 42 82 42 122C42 168 62 206 100 218C138 206 158 168 158 122C158 82 134 50 100 52Z";
+  "M100 46C64 46 40 84 40 124C40 168 62 206 100 214C138 206 160 168 160 124C160 84 136 46 100 46Z";
 
+/** Rounded triangle ears that sit on the head, not above it. */
 export const EAR_L =
-  "M74 66C70 46 56 28 66 14C76 2 96 16 100 38C102 52 92 64 80 68Z";
+  "M78 70C70 52 52 36 60 20C70 6 96 16 104 40C108 54 96 70 84 74Z";
 
 export const EAR_R =
-  "M126 66C130 46 144 28 134 14C124 2 104 16 100 38C98 52 108 64 120 68Z";
+  "M122 70C130 52 148 36 140 20C130 6 104 16 96 40C92 54 104 70 116 74Z";
 
 export const TAIL =
-  "M146 174C164 166 188 176 186 194C184 208 164 210 152 198C142 188 140 180 146 174Z";
+  "M148 168C166 160 188 172 184 190C180 204 160 204 150 190C142 178 140 172 148 168Z";
 
-export const SMILE = "M84 152Q100 168 116 152";
-
-export const FROWN = "M88 162Q100 150 112 162";
+export const SMILE = "M86 150Q100 166 114 150";
+export const FROWN = "M88 160Q100 150 112 160";
 
 export function star(cx: number, cy: number, r: number) {
   const inner = r * 0.34;
