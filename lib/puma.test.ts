@@ -16,6 +16,8 @@ const SECRET_NAMES = [
   "GROQ_API_KEY",
   "LLM_PROVIDER",
   "LLM_MODEL",
+  "LLM_BASE_URL",
+  "LLM_API_KEY",
   "CHAT_THINK_DELAY_MS",
   "CHAT_TOKEN_DELAY_MS",
   "CHAT_RATE_LIMIT",
@@ -159,6 +161,16 @@ describe("provider", () => {
 
     process.env.LLM_PROVIDER = "nope";
     assert.equal(resolveProvider(), null);
+
+    process.env.LLM_PROVIDER = "vikey";
+    process.env.LLM_BASE_URL = "https://api.example.test/v1/";
+    process.env.LLM_API_KEY = "vk-test";
+    process.env.LLM_MODEL = "deepseek/deepseek-v4.1-flash";
+    const compatible = resolveProvider();
+    assert.equal(compatible?.name, "compatible");
+    assert.equal(compatible?.baseURL, "https://api.example.test/v1");
+    assert.equal(compatible?.apiKey, "vk-test");
+    assert.equal(compatible?.modelId, "deepseek/deepseek-v4.1-flash");
   });
 });
 
