@@ -8,7 +8,7 @@ import { site } from "@/lib/site";
 export const metadata: Metadata = {
   // The layout's title template adds " — Putu Mahendra".
   title: "Saved articles",
-  description: `Articles ${site.name} is saving to read, and the ones he has finished.`,
+  description: `Articles ${site.name} has saved.`,
   alternates: { canonical: "/saved" },
 };
 

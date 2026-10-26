@@ -29,70 +29,56 @@ function host(link: string) {
   }
 }
 
-function Items({ links, done }: { links: Link[]; done?: boolean }) {
-  return (
-    <ul className="saved-list">
-      {links.map((link) => (
-        <li key={link.id}>
-          <a
-            className={done ? "saved-item saved-item-done" : "saved-item"}
-            href={link.url}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <span className="saved-title">{link.title}</span>
-            <span className="saved-meta">
-              {host(link.url)} · {day.format(done ? link.readAt! : link.savedAt)}
-            </span>
-          </a>
-        </li>
-      ))}
-    </ul>
-  );
+/** The site's own name, for the tile: "developer.mozilla.org" → "m". */
+function initial(site: string) {
+  const parts = site.split(".");
+  const name = parts.length >= 2 ? parts[parts.length - 2]! : site;
+  return name.charAt(0);
 }
 
-function Lists({ links }: { links: Link[] }) {
+function Bookmarks({ links }: { links: Link[] }) {
   if (links.length === 0) {
     return <p className="saved-note">Nothing saved yet.</p>;
   }
-  const toRead = links.filter((l) => l.readAt === null);
-  const read = links
-    .filter((l) => l.readAt !== null)
-    .sort((a, b) => b.readAt! - a.readAt!);
-
   return (
-    <>
-      <section className="saved-section" aria-labelledby="to-read">
-        <h2 id="to-read">
-          to read <span className="saved-count">{toRead.length}</span>
-        </h2>
-        {toRead.length ? (
-          <Items links={toRead} />
-        ) : (
-          <p className="saved-note">All caught up.</p>
-        )}
-      </section>
-      {read.length ? (
-        <section className="saved-section" aria-labelledby="read">
-          <h2 id="read">
-            read <span className="saved-count">{read.length}</span>
-          </h2>
-          <Items links={read} done />
-        </section>
-      ) : null}
-    </>
+    <ul className="saved-list">
+      {links.map((link) => {
+        const site = host(link.url);
+        return (
+          <li key={link.id}>
+            <a
+              className="saved-item"
+              href={link.url}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <span className="saved-tile" aria-hidden="true">
+                {initial(site)}
+              </span>
+              <span className="saved-text">
+                <span className="saved-title">{link.title}</span>
+                <span className="saved-host">{site}</span>
+              </span>
+              <time className="saved-date" dateTime={new Date(link.savedAt).toISOString()}>
+                {day.format(link.savedAt)}
+              </time>
+            </a>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
 function Live({ initial }: { initial: Link[] }) {
   // Until the socket connects, show what the server sent; no loading state.
   const live = useQuery(anyApi.links.list, {}) as Link[] | undefined;
-  return <Lists links={live ?? initial} />;
+  return <Bookmarks links={live ?? initial} />;
 }
 
-/** Saved articles: server-rendered first, then live from Convex. */
+/** Saved articles, newest first: server-rendered, then live from Convex. */
 export function SavedArticles({ initial }: { initial: Link[] }) {
-  if (!client) return <Lists links={initial} />;
+  if (!client) return <Bookmarks links={initial} />;
   return (
     <ConvexProvider client={client}>
       <Live initial={initial} />

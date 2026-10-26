@@ -86,7 +86,7 @@ const topics: Topic[] = [
       "bacaan",
     ],
     mood: "idea",
-    answer: `Putu keeps a public list of saved articles, the ones he's reading and has finished: ${site.url}/saved`,
+    answer: `Putu keeps a public list of articles he has saved: ${site.url}/saved`,
   },
   {
     id: "puma",

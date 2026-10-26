@@ -8,7 +8,7 @@ function readingKnowledge() {
 
 ## Saved articles
 
-Putu keeps a public page of saved articles: the ones he is saving to read and the ones he has finished: ${site.url}/saved
+Putu keeps a public page of articles he has saved: ${site.url}/saved
 You can't see the items on it. When someone asks what Putu is reading, reads, or has saved, give that link and say the page shows his saved articles. Do not name any article.`;
 }
 

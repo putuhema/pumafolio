@@ -55,9 +55,8 @@ const COMMANDS: Command[] = [
   { name: "hire", hint: "is he open to work", ask: "Is Putu open to new work?" },
   { name: "contact", hint: "email, github", ask: "How can I contact Putu?" },
   { name: "saved", hint: "his saved articles" },
-  { name: "save", hint: "save a link to read", arg: true, owner: true },
-  { name: "read", hint: "mark a link as read", arg: true, owner: true },
-  { name: "remove", hint: "remove an unread link", arg: true, owner: true },
+  { name: "save", hint: "save a link", arg: true, owner: true },
+  { name: "remove", hint: "remove a saved link", arg: true, owner: true },
   { name: "lock", hint: "lock this browser", owner: true },
   { name: "clear", hint: "clear the conversation" },
 ];

@@ -62,7 +62,6 @@ export const READING_COMMANDS = [
   "save",
   "saved",
   "reading",
-  "read",
   "remove",
   "unlock",
   "lock",
@@ -87,7 +86,7 @@ export async function runReadingCommand(
         if (status === 429) return "Too many wrong keys. Try again in an hour.";
         if (!ok) return "That key didn't work.";
         setKey(arg);
-        return "Unlocked on this browser. /save and /read are ready.";
+        return "Unlocked on this browser. /save and /remove are ready.";
       }
       case "lock":
         setKey(null);
@@ -113,16 +112,14 @@ export async function runReadingCommand(
         const links = await loadLinks();
         if (typeof links === "string") return links;
         const page = `${window.location.origin}/saved`;
-        const unread = links.filter((l) => l.readAt === null);
-        const readCount = links.length - unread.length;
         if (links.length === 0) {
           return `Putu hasn't saved any articles yet: ${page}`;
         }
-        const summary = `Putu has ${unread.length} saved articles to read and ${readCount} read. See them all: ${page}`;
-        // Only the owner needs numbers, for /read and /remove.
-        if (!getKey() || unread.length === 0) return summary;
-        const lines = [summary, "", "To read, numbered for /read and /remove:", ""];
-        unread.forEach((l, i) => lines.push(`- **${i + 1}.** ${l.title}`));
+        const summary = `Putu has ${links.length} saved ${links.length === 1 ? "article" : "articles"}. See them all: ${page}`;
+        // Only the owner needs numbers, for /remove.
+        if (!getKey()) return summary;
+        const lines = [summary, "", "Numbered for /remove, newest first:", ""];
+        links.forEach((l, i) => lines.push(`- **${i + 1}.** ${l.title}`));
         return lines.join("\n");
       }
       case "remove": {
@@ -134,8 +131,8 @@ export async function runReadingCommand(
         }
         const links = await loadLinks();
         if (typeof links === "string") return links;
-        const target = links.filter((l) => l.readAt === null)[n - 1];
-        if (!target) return `There's no unread link number ${n}.`;
+        const target = links[n - 1];
+        if (!target) return `There's no saved link number ${n}.`;
         const { ok, status } = await call({ action: "remove", id: target.id }, key);
         if (status === 429) return "Too many wrong keys. Try again in an hour.";
         if (status === 401) {
@@ -143,25 +140,6 @@ export async function runReadingCommand(
           return "Your key stopped working, so this browser is locked again.";
         }
         return ok ? `Removed **${target.title}** from the list.` : "Couldn't remove that link.";
-      }
-      case "read": {
-        const key = getKey();
-        if (!key) return NOT_OWNER;
-        const n = Number.parseInt(arg, 10);
-        if (!Number.isInteger(n) || n < 1) {
-          return "Type /read followed by a number from /saved.";
-        }
-        const links = await loadLinks();
-        if (typeof links === "string") return links;
-        const target = links.filter((l) => l.readAt === null)[n - 1];
-        if (!target) return `There's no unread link number ${n}.`;
-        const { ok, status } = await call({ action: "read", id: target.id }, key);
-        if (status === 429) return "Too many wrong keys. Try again in an hour.";
-        if (status === 401) {
-          setKey(null);
-          return "Your key stopped working, so this browser is locked again.";
-        }
-        return ok ? `Marked **${target.title}** as read.` : "Couldn't mark that link.";
       }
     }
   } catch {
