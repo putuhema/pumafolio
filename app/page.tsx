@@ -1,5 +1,19 @@
+import {
+  ArrowUpRightIcon,
+  CalendarCheckIcon,
+  DatabaseIcon,
+  FolderIcon,
+  ReceiptIcon,
+  type LucideIcon,
+} from "lucide-react";
 import { FolioShell } from "@/components/folio-shell";
 import { site } from "@/lib/site";
+
+const WORK_ICONS: Record<string, LucideIcon> = {
+  simha: DatabaseIcon,
+  "rsud-hadir": CalendarCheckIcon,
+  kasirku: ReceiptIcon,
+};
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -46,34 +60,37 @@ export default function Home() {
           <section className="work" id="work">
             <h2>work</h2>
             <ul>
-              {site.work.map((item) => (
-                <li key={item.slug}>
-                  <p>
-                    {item.name} – {item.description}
-                  </p>
-                  {item.href ? (
-                    <a
-                      className="view"
-                      href={item.href}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      view
-                    </a>
-                  ) : (
-                    <span className="view pending" title="No public link yet">
-                      view
-                      <span className="sr-only">, no public link yet</span>
+              {site.work.map((item) => {
+                const Icon = WORK_ICONS[item.slug] ?? FolderIcon;
+                return (
+                  <li key={item.slug} className="work-item">
+                    <span className="work-icon" aria-hidden="true">
+                      <Icon />
                     </span>
-                  )}
-                </li>
-              ))}
+                    <div className="work-body">
+                      <p className="work-name">{item.name}</p>
+                      <p className="work-desc">{item.description}</p>
+                    </div>
+                    {item.href ? (
+                      <a
+                        className="view"
+                        href={item.href}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        view
+                        <ArrowUpRightIcon aria-hidden="true" />
+                        <span className="sr-only"> {item.name}</span>
+                      </a>
+                    ) : (
+                      <span className="view pending" title="No public link yet">
+                        private
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
-          </section>
-
-          <section className="stack">
-            <h2>stack</h2>
-            <p>{site.stack}</p>
           </section>
 
           <footer className="foot">

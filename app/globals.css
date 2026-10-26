@@ -5,38 +5,42 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --color-paper: #fafaf8;
-  --color-ink: #141414;
+  --color-paper: #fdf7f9;
+  --color-ink: #2a1520;
   --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 }
 
 :root {
   color-scheme: light;
-  --paper: #fafaf8;
-  --ink: #141414;
-  --line: #c8c8c2;
-  --quiet: #8d8d86;
+  /* Pinkies theme: blush paper, plum ink, one raspberry accent. */
+  --paper: #fdf7f9;
+  --ink: #2a1520;
+  --line: #ecd3dd;
+  --quiet: #8a6474;
+  --pink: #d6336c;
+  --pink-ink: #fff5f8;
+  --pink-soft: #f8dbe6;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
-  --background: #fafaf8;
-  --foreground: #141414;
-  --card: #fafaf8;
-  --card-foreground: #141414;
-  --popover: #fafaf8;
-  --popover-foreground: #141414;
-  --primary: #141414;
-  --primary-foreground: #fafaf8;
-  --secondary: #ecece6;
-  --secondary-foreground: #141414;
-  --muted: #ecece6;
-  --muted-foreground: #8d8d86;
-  --accent: #ecece6;
-  --accent-foreground: #141414;
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --primary: var(--pink);
+  --primary-foreground: var(--pink-ink);
+  --secondary: #f8e9ef;
+  --secondary-foreground: var(--ink);
+  --muted: #f8e9ef;
+  --muted-foreground: var(--quiet);
+  --accent: var(--pink-soft);
+  --accent-foreground: var(--ink);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: #c8c8c2;
-  --input: #c8c8c2;
-  --ring: #141414;
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--pink);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -51,6 +55,20 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+}
+
+/* Light is the default. Dark only applies when data-theme="dark" is set (for a future toggle). */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #171013;
+  --ink: #f6e9ee;
+  --line: #3a2630;
+  --quiet: #ad8b98;
+  --pink: #f472a8;
+  --pink-ink: #2a0a17;
+  --pink-soft: #3d1a2a;
+  --secondary: #20151a;
+  --muted: #20151a;
 }
 
 html {
@@ -69,12 +87,12 @@ body {
 }
 
 ::selection {
-  background: #deded8;
+  background: var(--pink-soft);
   color: var(--ink);
 }
 
 :focus-visible {
-  outline: 1px solid var(--ink);
+  outline: 1px solid var(--pink);
   outline-offset: 3px;
 }
 
@@ -132,45 +150,89 @@ h2 {
   letter-spacing: -0.015em;
 }
 
-.work,
-.stack {
-  margin-top: 1.55rem;
+.work {
+  margin-top: 1.75rem;
 }
 
 .work ul {
   list-style: none;
+  max-width: 40rem;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
 }
 
-.work p {
+.work-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.work-item:last-child {
+  border-bottom: 1px solid var(--line);
+}
+
+.work-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.6rem;
+  background: var(--pink-soft);
+  color: var(--pink);
+}
+
+.work-icon svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.work-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.work-body p {
   margin: 0;
-  max-width: 42rem;
+}
+
+.work-name {
+  font-weight: 600;
+}
+
+.work-desc {
+  color: var(--quiet);
+  font-size: 0.9rem;
 }
 
 .view {
-  display: inline-block;
-  margin-top: 0.2rem;
-  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+  font-size: 0.85rem;
   text-underline-offset: 3px;
 }
 
-a.view {
-  text-decoration-thickness: 1px;
+.view svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.profile a.view {
+  color: var(--pink);
+  text-decoration: none;
+}
+
+.profile a.view:hover {
+  text-decoration: underline;
 }
 
 .view.pending {
-  opacity: 0.42;
-  text-decoration: none;
+  color: var(--quiet);
   cursor: default;
-}
-
-.stack p {
-  margin: 0;
-  max-width: 40rem;
 }
 
 .foot {
@@ -208,8 +270,8 @@ a.view {
   padding: 0.45rem 0.85rem;
   border: 0;
   border-radius: 999px;
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--pink);
+  color: var(--pink-ink);
   font: inherit;
   cursor: pointer;
   transition: transform 160ms var(--ease-out), opacity 160ms var(--ease-out);
@@ -254,8 +316,8 @@ a.view {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #3f8f5a;
-  box-shadow: 0 0 0 3px rgb(63 143 90 / 15%);
+  background: var(--pink);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pink) 18%, transparent);
 }
 
 .dock-actions {
@@ -285,8 +347,8 @@ a.view {
   overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem 0 0.75rem;
+  gap: 1rem;
+  padding: 1.25rem 0 0.75rem;
 }
 
 .empty-lead {
@@ -335,17 +397,48 @@ a.view {
   font-size: 0.85rem;
 }
 
+.turn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 62ch;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.turn:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
 .msg {
   margin: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
+.msg-user {
+  font-weight: 600;
+}
+
+.msg-bot {
+  line-height: 1.6;
+}
+
+.msg-bot.msg-note {
+  color: var(--quiet);
+  font-size: 0.875rem;
+}
+
 .msg a {
-  color: inherit;
+  color: var(--pink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
 .gt {
+  color: var(--pink);
   white-space: pre;
 }
 
@@ -428,7 +521,7 @@ a.view {
   width: 0.8rem;
   height: 0.8rem;
   border: 2px solid var(--line);
-  border-top-color: var(--ink);
+  border-top-color: var(--pink);
   border-radius: 50%;
   animation: ask-spin 800ms linear infinite;
 }
@@ -451,7 +544,7 @@ a.view {
   border: 1px solid var(--line);
   border-radius: 0.75rem;
   background: var(--paper);
-  box-shadow: 0 12px 30px -16px rgb(20 20 20 / 35%);
+  box-shadow: 0 12px 30px -16px rgb(42 21 32 / 35%);
   font-size: 0.875rem;
 }
 
@@ -520,7 +613,7 @@ a.view {
     padding: 0.85rem 1.15rem calc(1rem + env(safe-area-inset-bottom));
     background: var(--paper);
     border-top: 0;
-    box-shadow: 0 -12px 40px rgb(20 20 20 / 6%);
+    box-shadow: 0 -12px 40px rgb(42 21 32 / 6%);
     transform: translateY(110%);
     transition: transform 280ms var(--ease-drawer);
   }
@@ -535,7 +628,7 @@ a.view {
     inset: 0;
     z-index: 30;
     border: 0;
-    background: rgba(20, 20, 20, 0.18);
+    background: rgb(42 21 32 / 18%);
     cursor: pointer;
   }
 

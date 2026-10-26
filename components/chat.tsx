@@ -19,6 +19,7 @@ const STARTERS = [
   { q: "How does simha keep hospital data safe?", tag: "project" },
   { q: "Is Putu open to new work?", tag: "hiring" },
   { q: "What has he shipped to production?", tag: "work" },
+  { q: "What's his tech stack?", tag: "stack" },
   { q: "Summarize his CV in 3 lines", tag: "cv" },
 ];
 
@@ -32,21 +33,43 @@ const COMMANDS: { name: string; hint: string; ask?: string }[] = [
   { name: "clear", hint: "clear the conversation" },
 ];
 
+/** Short, readable label for a URL: no protocol, "www." or trailing slash. */
+function linkLabel(url: string) {
+  return url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
+}
+
+const LINK_RE = /(https?:\/\/[^\s]+|[\w.+-]+@[\w-]+\.[\w.-]+)/g;
+
 function linkify(text: string) {
-  const parts = text.split(/(https?:\/\/[^\s]+)/g);
-  return parts.map((part, i) => {
-    if (!part.startsWith("http")) return <span key={i}>{part}</span>;
-    const url = part.replace(/[),.;]+$/, "");
-    const tail = part.slice(url.length);
+  return text.split(LINK_RE).map((part, i) => {
+    if (i % 2 === 0) return part ? <span key={i}>{part}</span> : null;
+    const target = part.replace(/[),.;:]+$/, "");
+    const tail = part.slice(target.length);
+    const isUrl = target.startsWith("http");
     return (
       <span key={i}>
-        <a href={url} target="_blank" rel="noreferrer">
-          {url}
+        <a
+          href={isUrl ? target : `mailto:${target}`}
+          {...(isUrl ? { target: "_blank", rel: "noreferrer" } : {})}
+        >
+          {isUrl ? linkLabel(target) : target}
         </a>
         {tail}
       </span>
     );
   });
+}
+
+/** Pair each question with the answer that follows it. */
+function toTurns(messages: Msg[]) {
+  const turns: { user?: string; answer?: string }[] = [];
+  for (const msg of messages) {
+    if (msg.role === "user") turns.push({ user: msg.content });
+    else if (turns.length && turns[turns.length - 1]!.answer === undefined) {
+      turns[turns.length - 1]!.answer = msg.content;
+    } else turns.push({ answer: msg.content });
+  }
+  return turns;
 }
 
 export function ChatDock({
@@ -409,25 +432,32 @@ export function ChatDock({
             </ul>
           </div>
         ) : null}
-        {messages.map((msg, i) =>
-          msg.role === "user" ? (
-            <p className="msg msg-user" key={i}>
-              <span className="gt" aria-hidden="true">
-                &gt;{" "}
-              </span>
-              {msg.content}
-            </p>
-          ) : msg.content ? (
-            <p className="msg msg-bot" key={i}>
-              {linkify(msg.content)}
-            </p>
-          ) : null,
-        )}
-        {phase === "thinking" ? (
-          <p className="think-ellipsis" aria-hidden="true">
-            ...
-          </p>
-        ) : null}
+        {toTurns(messages).map((turn, i, all) => (
+          <article className="turn" key={i}>
+            {turn.user !== undefined ? (
+              <p className="msg msg-user">
+                <span className="gt" aria-hidden="true">
+                  &gt;{" "}
+                </span>
+                {turn.user}
+              </p>
+            ) : null}
+            {turn.answer ? (
+              <p
+                className={
+                  turn.answer === "(stopped)" ? "msg msg-bot msg-note" : "msg msg-bot"
+                }
+              >
+                {linkify(turn.answer)}
+              </p>
+            ) : null}
+            {phase === "thinking" && i === all.length - 1 ? (
+              <p className="think-ellipsis" aria-hidden="true">
+                ...
+              </p>
+            ) : null}
+          </article>
+        ))}
         <div ref={endRef} />
       </div>
       <div className="sr-only" aria-live="polite">
