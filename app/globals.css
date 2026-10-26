@@ -868,6 +868,7 @@ h2 {
     transform: none;
   }
 
+  /* Same top padding as the docked panel, so the header doesn't jump. */
   .dock-embedded[data-fullscreen="true"] {
     position: fixed;
     inset: 0;
@@ -875,9 +876,27 @@ h2 {
     width: 100%;
     height: 100dvh;
     min-height: 100dvh;
-    padding-block: clamp(1.5rem, 5vh, 3rem) 1rem;
-    padding-inline: clamp(1rem, 3vw, 2rem);
+    padding-inline: clamp(1rem, 4vw, 2.5rem);
     transition: none;
+  }
+
+  /* Keep a readable column instead of stretching across the screen. */
+  .dock-embedded[data-fullscreen="true"] > * {
+    width: 100%;
+    max-width: 46rem;
+    margin-inline: auto;
+  }
+
+  /* A quick fade in, so the move into the centred column reads as one step. */
+  .dock-embedded[data-fullscreen="true"] {
+    animation: dock-expand 180ms var(--ease-out);
+  }
+
+  @keyframes dock-expand {
+    from {
+      opacity: 0;
+      transform: scale(0.985);
+    }
   }
 
   .shell-resizable[data-fullscreen="true"] .shell-handle {
@@ -898,6 +917,10 @@ h2 {
   .starters button,
   .shell-handle {
     transition: none;
+  }
+
+  .dock-embedded[data-fullscreen="true"] {
+    animation: none;
   }
 
   .launcher:active {
