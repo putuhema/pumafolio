@@ -53,7 +53,10 @@ describe("site config", () => {
     assert.equal(site.cv.href, null);
     assert.equal(site.work.find((item) => item.slug === "simha")?.href, "https://github.com/putuhema/simha");
     assert.equal(site.work.find((item) => item.slug === "rsud-hadir")?.href, null);
-    assert.equal(site.work.find((item) => item.slug === "kasirku")?.href, null);
+    assert.equal(
+      site.work.find((item) => item.slug === "hospital-ai")?.href,
+      "https://hospital-ai-chi.vercel.app",
+    );
     assert.equal("phone" in site, false);
     assert.equal(site.email, "putuhendramahendra@gmail.com");
   });
