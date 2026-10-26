@@ -3,6 +3,12 @@
 import { ArrowUpIcon, PlusIcon, SquareIcon } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import {
+  Drawer,
+  DrawerContent,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
@@ -142,14 +148,12 @@ export function ChatDock({
   const [draft, setDraft] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
   const [open, setOpen] = useState(false);
-  const [palm, setPalm] = useState(false);
   const [menuIndex, setMenuIndex] = useState(0);
   const [menuDismissed, setMenuDismissed] = useState(false);
   // Position in the sent-message history while pressing ↑/↓. null = editing a new draft.
   const [historyAt, setHistoryAt] = useState<number | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const launcherRef = useRef<HTMLButtonElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -171,69 +175,25 @@ export function ChatDock({
   const activeIndex = Math.min(menuIndex, Math.max(matches.length - 1, 0));
 
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 879px)");
-    const apply = () => setPalm(mq.matches);
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, []);
-
-  useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
   }, [messages, phase]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
+  // On phones the Vaul drawer handles Escape, focus trap, and scroll lock.
   useEffect(() => {
-    if (!open || !palm) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    inputRef.current?.focus();
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [open, palm]);
-
-  useEffect(() => {
-    if (embedded) {
-      function onKey(event: KeyboardEvent) {
-        if (event.key !== "Escape" || event.defaultPrevented) return;
-        if (fullscreen) {
-          onToggleFullscreen?.();
-          return;
-        }
-        onHide?.();
-      }
-      document.addEventListener("keydown", onKey);
-      return () => document.removeEventListener("keydown", onKey);
-    }
-    if (!open || !palm) return;
-    const dock = document.getElementById("ask-puma");
+    if (!embedded) return;
     function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        if (event.defaultPrevented) return;
-        setOpen(false);
-        launcherRef.current?.focus();
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      if (fullscreen) {
+        onToggleFullscreen?.();
         return;
       }
-      if (event.key !== "Tab" || !dock) return;
-      const items = dock.querySelectorAll<HTMLElement>(
-        "button:not(:disabled), input, a[href], textarea",
-      );
-      if (items.length === 0) return;
-      const first = items[0]!;
-      const last = items[items.length - 1]!;
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
+      onHide?.();
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [embedded, fullscreen, onHide, onToggleFullscreen, open, palm]);
+  }, [embedded, fullscreen, onHide, onToggleFullscreen]);
 
   function editDraft(value: string) {
     setDraft(value);
@@ -429,22 +389,17 @@ export function ChatDock({
     }
   }
 
-  const dock = (
-    <aside
-      id="ask-puma"
-      className={embedded ? "dock dock-embedded" : "dock"}
-      data-open={open ? "true" : "false"}
-      data-fullscreen={fullscreen ? "true" : "false"}
-      role={palm && open ? "dialog" : "complementary"}
-      aria-modal={palm && open ? true : undefined}
-      aria-labelledby={titleId}
-      inert={palm && !open ? true : undefined}
-    >
+  const title = (
+    <h2 id={titleId} className="dock-title">
+      <span className="dock-dot" aria-hidden="true" />
+      ask puma
+    </h2>
+  );
+
+  const body = (
+    <>
       <header className="dock-head">
-        <h2 id={titleId} className="dock-title">
-          <span className="dock-dot" aria-hidden="true" />
-          ask puma
-        </h2>
+        {embedded ? title : <DrawerTitle asChild>{title}</DrawerTitle>}
         <div className="dock-actions">
           {embedded && onToggleFullscreen ? (
             <button
@@ -466,7 +421,6 @@ export function ChatDock({
                 return;
               }
               setOpen(false);
-              launcherRef.current?.focus();
             }}
           >
             {embedded ? "hide" : "close"}
@@ -653,31 +607,44 @@ export function ChatDock({
           </span>
         </div>
       </form>
-    </aside>
+    </>
   );
 
-  if (embedded) return dock;
+  if (embedded) {
+    return (
+      <aside
+        id="ask-puma"
+        className="dock dock-embedded"
+        data-fullscreen={fullscreen ? "true" : "false"}
+        aria-labelledby={titleId}
+      >
+        {body}
+      </aside>
+    );
+  }
 
   return (
-    <>
-      <button
-        type="button"
-        className="scrim"
-        hidden={!open}
-        aria-label="Close ask puma"
-        onClick={() => setOpen(false)}
-      />
-      {dock}
-      <button
-        type="button"
-        className="launcher"
-        ref={launcherRef}
-        aria-expanded={open}
-        aria-controls="ask-puma"
-        onClick={() => setOpen(true)}
+    <Drawer open={open} onOpenChange={setOpen}>
+      <DrawerTrigger asChild>
+        <button type="button" className="launcher">
+          ask puma
+        </button>
+      </DrawerTrigger>
+      <DrawerContent
+        id="ask-puma"
+        className="dock-sheet"
+        aria-describedby={undefined}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          inputRef.current?.focus();
+        }}
+        onEscapeKeyDown={(event) => {
+          // Let Escape close the command menu or stop an answer first.
+          if (menuOpen || busy) event.preventDefault();
+        }}
       >
-        ask puma
-      </button>
-    </>
+        {body}
+      </DrawerContent>
+    </Drawer>
   );
 }

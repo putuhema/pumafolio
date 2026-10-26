@@ -275,10 +275,6 @@ h2 {
   }
 }
 
-.scrim {
-  display: none;
-}
-
 .dock-head {
   display: flex;
   align-items: baseline;
@@ -667,41 +663,26 @@ h2 {
   margin: 0;
 }
 
-@media (max-width: 879px) {
-  .dock {
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 40;
-    height: min(78dvh, 680px);
-    padding: 0.85rem 1.15rem calc(1rem + env(safe-area-inset-bottom));
-    background: var(--paper);
-    border-top: 0;
-    box-shadow: 0 -12px 40px rgb(42 21 32 / 6%);
-    transform: translateY(110%);
-    transition: transform 280ms var(--ease-drawer);
-  }
+/* Phone chat: a Vaul drawer (components/ui/drawer.tsx). */
+.dock-sheet {
+  height: min(85dvh, 720px);
+  max-height: none;
+  padding: 0 1.15rem calc(1rem + env(safe-area-inset-bottom));
+  border-top: 0;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 -12px 40px rgb(42 21 32 / 8%);
+}
 
-  .dock[data-open="true"] {
-    transform: translateY(0);
-  }
+.dock-sheet > div:first-child {
+  margin: 0.6rem auto 0.75rem;
+  width: 2.5rem;
+  background: var(--line);
+}
 
-  .scrim {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 30;
-    border: 0;
-    background: rgb(42 21 32 / 18%);
-    cursor: pointer;
-  }
-
-  .scrim[hidden] {
-    display: none;
-  }
+[data-slot="drawer-overlay"] {
+  background: rgb(42 21 32 / 18%);
+  backdrop-filter: none;
 }
 
 @media (min-width: 880px) {
@@ -797,8 +778,7 @@ h2 {
     pointer-events: none;
   }
 
-  .launcher:not(.launcher-desk),
-  .scrim {
+  .launcher:not(.launcher-desk) {
     display: none;
   }
 }
