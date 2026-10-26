@@ -1,0 +1,42 @@
+import assert from "node:assert/strict";
+import { afterEach, describe, it } from "node:test";
+import { fallbackTitle, fetchTitle, isOwnerKey, normalizeUrl } from "./links";
+
+describe("reading list links", () => {
+  const saved = process.env.OWNER_KEY;
+  afterEach(() => {
+    if (saved === undefined) delete process.env.OWNER_KEY;
+    else process.env.OWNER_KEY = saved;
+  });
+
+  it("accepts only plain http(s) URLs", () => {
+    assert.equal(normalizeUrl("https://example.com/a#x")?.toString(), "https://example.com/a");
+    assert.equal(normalizeUrl("javascript:alert(1)"), null);
+    assert.equal(normalizeUrl("file:///etc/passwd"), null);
+    assert.equal(normalizeUrl("https://user:pw@example.com"), null);
+    assert.equal(normalizeUrl("not a url"), null);
+  });
+
+  it("checks the owner key and refuses when none is set", () => {
+    delete process.env.OWNER_KEY;
+    assert.equal(isOwnerKey("anything"), false);
+    process.env.OWNER_KEY = "s3cret-key";
+    assert.equal(isOwnerKey("s3cret-key"), true);
+    assert.equal(isOwnerKey("s3cret-kez"), false);
+    assert.equal(isOwnerKey("short"), false);
+    assert.equal(isOwnerKey(null), false);
+  });
+
+  it("never fetches private or local addresses", async () => {
+    for (const raw of [
+      "http://localhost:3000/",
+      "http://127.0.0.1/",
+      "http://10.0.0.5/admin",
+      "http://169.254.169.254/latest/meta-data",
+      "http://[::1]/",
+    ]) {
+      const url = normalizeUrl(raw)!;
+      assert.equal(await fetchTitle(url), fallbackTitle(url));
+    }
+  });
+});

@@ -14,10 +14,16 @@ import {
   InputGroupButton,
   InputGroupTextarea,
 } from "@/components/ui/input-group";
+import {
+  hasOwnerKey,
+  isReadingCommand,
+  runReadingCommand,
+} from "@/lib/reading-commands";
 
 type Role = "user" | "assistant";
 
-type Msg = { role: Role; content: string; stopped?: boolean };
+/** `local` messages come from reading-list commands and are never sent to the model. */
+type Msg = { role: Role; content: string; stopped?: boolean; local?: boolean };
 
 type Phase = "idle" | "thinking" | "talking";
 
@@ -29,13 +35,30 @@ const STARTERS = [
   { q: "Summarize his CV in 3 lines", tag: "cv" },
 ];
 
-/** Slash commands. `ask` is sent to Puma; a command without it runs locally. */
-const COMMANDS: { name: string; hint: string; ask?: string }[] = [
+/**
+ * Slash commands. `ask` is sent to Puma; a command without it runs locally.
+ * `arg` commands fill the input and wait for a value. `owner` ones show in
+ * the menu only after /unlock (they still run if typed).
+ */
+type Command = {
+  name: string;
+  hint: string;
+  ask?: string;
+  arg?: boolean;
+  owner?: boolean;
+};
+
+const COMMANDS: Command[] = [
   { name: "projects", hint: "list his work", ask: "What projects has Putu built?" },
   { name: "stack", hint: "tools he uses", ask: "What is Putu's tech stack?" },
   { name: "cv", hint: "his CV in 3 lines", ask: "Summarize his CV in 3 lines" },
   { name: "hire", hint: "is he open to work", ask: "Is Putu open to new work?" },
   { name: "contact", hint: "email, github", ask: "How can I contact Putu?" },
+  { name: "reading", hint: "what he's reading" },
+  { name: "save", hint: "save a link to read", arg: true, owner: true },
+  { name: "read", hint: "mark a link as read", arg: true, owner: true },
+  { name: "remove", hint: "remove an unread link", arg: true, owner: true },
+  { name: "lock", hint: "lock this browser", owner: true },
   { name: "clear", hint: "clear the conversation" },
 ];
 
@@ -150,6 +173,11 @@ export function ChatDock({
   const [open, setOpen] = useState(false);
   const [menuIndex, setMenuIndex] = useState(0);
   const [menuDismissed, setMenuDismissed] = useState(false);
+  // True once this browser has the owner key (after /unlock).
+  // Only the slash menu reads this, and it never renders on the server.
+  const [owner, setOwner] = useState(
+    () => typeof window !== "undefined" && hasOwnerKey(),
+  );
   // Position in the sent-message history while pressing ↑/↓. null = editing a new draft.
   const [historyAt, setHistoryAt] = useState<number | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -169,7 +197,10 @@ export function ChatDock({
   // The command menu shows while the draft is a single "/word" with no space yet.
   const slash = /^\/(\S*)$/.exec(draft);
   const matches = slash
-    ? COMMANDS.filter((c) => c.name.startsWith(slash[1]!.toLowerCase()))
+    ? COMMANDS.filter(
+        (c) =>
+          (!c.owner || owner) && c.name.startsWith(slash[1]!.toLowerCase()),
+      )
     : [];
   const menuOpen = matches.length > 0 && !menuDismissed;
   const activeIndex = Math.min(menuIndex, Math.max(matches.length - 1, 0));
@@ -206,9 +237,36 @@ export function ChatDock({
     abortRef.current?.abort();
   }
 
+  async function runLocal(name: string, arg: string) {
+    if (busy || !isReadingCommand(name)) return;
+    editDraft("");
+    // Never echo the owner key back into the chat.
+    const shown = name === "unlock" ? "/unlock ••••" : `/${name}${arg ? ` ${arg}` : ""}`;
+    setMessages((current) => [...current, { role: "user", content: shown, local: true }]);
+    setPhase("thinking");
+    const reply = await runReadingCommand(name, arg);
+    setOwner(hasOwnerKey());
+    setMessages((current) => [
+      ...current,
+      { role: "assistant", content: reply, local: true },
+    ]);
+    setPhase("idle");
+    inputRef.current?.focus();
+  }
+
   function runCommand(name: string) {
     const command = COMMANDS.find((c) => c.name === name);
     if (!command) return;
+    if (command.arg) {
+      editDraft(`/${command.name} `);
+      setMenuDismissed(true);
+      inputRef.current?.focus();
+      return;
+    }
+    if (isReadingCommand(command.name)) {
+      void runLocal(command.name, "");
+      return;
+    }
     editDraft("");
     if (command.ask) {
       void send(command.ask);
@@ -223,7 +281,19 @@ export function ChatDock({
   }
 
   function submit() {
+    const withArg = /^\/(\S+)\s+([\s\S]+)$/.exec(draft.trim());
+    if (withArg && isReadingCommand(withArg[1]!.toLowerCase())) {
+      void runLocal(withArg[1]!.toLowerCase(), withArg[2]!.trim());
+      return;
+    }
     const exact = /^\/(\S+)\s*$/.exec(draft.trim());
+    if (exact && isReadingCommand(exact[1]!.toLowerCase())) {
+      const name = exact[1]!.toLowerCase();
+      const command = COMMANDS.find((c) => c.name === name);
+      if (command?.arg) runCommand(name);
+      else void runLocal(name, "");
+      return;
+    }
     if (exact && COMMANDS.some((c) => c.name === exact[1]!.toLowerCase())) {
       runCommand(exact[1]!.toLowerCase());
       return;
@@ -236,7 +306,7 @@ export function ChatDock({
     if (!content || busy) return;
     editDraft("");
     const history = [...messages, { role: "user" as const, content }]
-      .filter((m) => m.content.trim())
+      .filter((m) => !m.local && m.content.trim())
       .slice(-6)
       .map((m) => ({ role: m.role, content: m.content }));
     setMessages([...messages, { role: "user", content }]);
