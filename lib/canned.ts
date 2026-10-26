@@ -73,6 +73,20 @@ const topics: Topic[] = [
       "At the hospital Putu also built Stok Oksigen (oxygen stock: Next.js 15, Hono, Drizzle, Postgres, Excel export, PWA), Laporan ISO-TB (tuberculosis reporting), and How-to Farmasi, a pharmacy how-to wiki. PharmaLens is a private AI pharmacy assistant (Next.js 15, tRPC, Drizzle, libSQL, Groq LLaMA 3.3 70B). No public PharmaLens URL is listed.",
   },
   {
+    id: "reading",
+    keys: [
+      "reading list",
+      "reading",
+      "read later",
+      "is he reading",
+      "does he read",
+      "articles",
+      "bacaan",
+    ],
+    mood: "idea",
+    answer: `Putu keeps a public reading list of what he's reading and has finished: ${site.url}/reading`,
+  },
+  {
     id: "puma",
     keys: ["mascot", "field station", "mr. p", "mr p", "who are you", "what are you"],
     mood: "idea",

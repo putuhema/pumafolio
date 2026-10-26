@@ -219,6 +219,52 @@ h2 {
   cursor: default;
 }
 
+/* /reading page */
+.profile a.home-link {
+  text-decoration: none;
+}
+
+.profile a.reading-title {
+  text-decoration: none;
+}
+
+.profile a.reading-title:hover {
+  color: var(--pink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+}
+
+/* The whole row opens the link: stretch the title's hit area over it. */
+.work-item:has(.reading-title) {
+  position: relative;
+}
+
+.reading-title::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.reading-arrow {
+  flex-shrink: 0;
+  width: 0.95rem;
+  height: 0.95rem;
+  color: var(--quiet);
+}
+
+.work-item:has(.reading-title:hover) .reading-arrow {
+  color: var(--pink);
+}
+
+.reading-note {
+  margin: 1.75rem 0 0;
+  color: var(--quiet);
+}
+
+.work .reading-note {
+  margin-top: 0;
+}
+
 .foot {
   margin-top: 1.75rem;
 }

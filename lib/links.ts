@@ -165,3 +165,48 @@ export async function fetchTitle(start: URL) {
   }
   return fallbackTitle(start);
 }
+
+/*
+ * Wrong owner keys per IP. 5 wrong keys in 15 minutes blocks that IP from
+ * every owner action for an hour, even with the right key. In memory, so
+ * each server instance counts on its own; Convex also caps wrong keys
+ * across everyone (convex/links.ts), which is the hard limit.
+ */
+const OWNER_MAX_FAILURES = 5;
+const OWNER_FAILURE_WINDOW_MS = 15 * 60 * 1000;
+const OWNER_BLOCK_MS = 60 * 60 * 1000;
+const OWNER_MAX_TRACKED = 5_000;
+
+type OwnerAttempts = { failures: number[]; blockedUntil: number };
+const ownerAttempts = new Map<string, OwnerAttempts>();
+
+export function resetOwnerLimit() {
+  ownerAttempts.clear();
+}
+
+/** Seconds until this IP may try again, or 0 when it isn't blocked. */
+export function ownerBlockedFor(ip: string, now = Date.now()) {
+  const entry = ownerAttempts.get(ip);
+  if (!entry || entry.blockedUntil <= now) return 0;
+  return Math.ceil((entry.blockedUntil - now) / 1000);
+}
+
+export function recordOwnerFailure(ip: string, now = Date.now()) {
+  const entry = ownerAttempts.get(ip) ?? { failures: [], blockedUntil: 0 };
+  entry.failures = entry.failures.filter((t) => now - t < OWNER_FAILURE_WINDOW_MS);
+  entry.failures.push(now);
+  if (entry.failures.length >= OWNER_MAX_FAILURES) {
+    entry.blockedUntil = now + OWNER_BLOCK_MS;
+    entry.failures = [];
+  }
+  ownerAttempts.delete(ip);
+  ownerAttempts.set(ip, entry);
+  if (ownerAttempts.size > OWNER_MAX_TRACKED) {
+    const oldest = ownerAttempts.keys().next().value;
+    if (oldest !== undefined) ownerAttempts.delete(oldest);
+  }
+}
+
+export function clearOwnerFailures(ip: string) {
+  ownerAttempts.delete(ip);
+}

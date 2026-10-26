@@ -82,7 +82,8 @@ export async function runReadingCommand(
     switch (name) {
       case "unlock": {
         if (!arg) return "Type /unlock followed by your owner key.";
-        const { ok } = await call({ action: "unlock" }, arg);
+        const { ok, status } = await call({ action: "unlock" }, arg);
+        if (status === 429) return "Too many wrong keys. Try again in an hour.";
         if (!ok) return "That key didn't work.";
         setKey(arg);
         return "Unlocked on this browser. /save and /read are ready.";
@@ -95,6 +96,7 @@ export async function runReadingCommand(
         if (!key) return NOT_OWNER;
         if (!arg) return "Type /save followed by a link.";
         const { ok, status, data } = await call({ action: "save", url: arg }, key);
+        if (status === 429) return "Too many wrong keys. Try again in an hour.";
         if (status === 401) {
           setKey(null);
           return "Your key stopped working, so this browser is locked again.";
@@ -108,23 +110,17 @@ export async function runReadingCommand(
       case "reading": {
         const links = await loadLinks();
         if (typeof links === "string") return links;
+        const page = `${window.location.origin}/reading`;
         const unread = links.filter((l) => l.readAt === null);
-        const read = links.filter((l) => l.readAt !== null).slice(0, 5);
-        if (links.length === 0) return "The reading list is empty.";
-        const lines: string[] = [];
-        lines.push(
-          unread.length
-            ? `Putu's reading list has ${unread.length} unread.`
-            : "Putu has read everything on the list.",
-        );
-        if (unread.length) {
-          lines.push("");
-          unread.forEach((l, i) => lines.push(`- **${i + 1}. ${l.title}** ${l.url}`));
+        const readCount = links.length - unread.length;
+        if (links.length === 0) {
+          return `Putu's reading list is empty for now: ${page}`;
         }
-        if (read.length) {
-          lines.push("", "Recently read:", "");
-          read.forEach((l) => lines.push(`- ${l.title} ${l.url}`));
-        }
+        const summary = `Putu has ${unread.length} to read and ${readCount} read. See the whole list: ${page}`;
+        // Only the owner needs numbers, for /read and /remove.
+        if (!getKey() || unread.length === 0) return summary;
+        const lines = [summary, "", "To read, numbered for /read and /remove:", ""];
+        unread.forEach((l, i) => lines.push(`- **${i + 1}.** ${l.title}`));
         return lines.join("\n");
       }
       case "remove": {
@@ -139,6 +135,7 @@ export async function runReadingCommand(
         const target = links.filter((l) => l.readAt === null)[n - 1];
         if (!target) return `There's no unread link number ${n}.`;
         const { ok, status } = await call({ action: "remove", id: target.id }, key);
+        if (status === 429) return "Too many wrong keys. Try again in an hour.";
         if (status === 401) {
           setKey(null);
           return "Your key stopped working, so this browser is locked again.";
@@ -157,6 +154,7 @@ export async function runReadingCommand(
         const target = links.filter((l) => l.readAt === null)[n - 1];
         if (!target) return `There's no unread link number ${n}.`;
         const { ok, status } = await call({ action: "read", id: target.id }, key);
+        if (status === 429) return "Too many wrong keys. Try again in an hour.";
         if (status === 401) {
           setKey(null);
           return "Your key stopped working, so this browser is locked again.";

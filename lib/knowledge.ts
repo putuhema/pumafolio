@@ -1,8 +1,22 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { site } from "./site";
+
+/** The reading list section depends on the site URL, so it's added here, not in about.md. */
+function readingKnowledge() {
+  return `
+
+## Reading list
+
+Putu keeps a public reading list of articles he is saving to read and the ones he has finished: ${site.url}/reading
+You can't see the items on it. When someone asks what Putu is reading, reads, or recommends, give that link and say the page shows what he's reading and has read. Do not name any article.`;
+}
 
 export function loadKnowledge() {
-  return readFileSync(join(process.cwd(), "content", "about.md"), "utf8");
+  return (
+    readFileSync(join(process.cwd(), "content", "about.md"), "utf8") +
+    readingKnowledge()
+  );
 }
 
 export const REFUSAL = "That's outside what I know about Putu.";

@@ -1,6 +1,6 @@
 import { ArrowUpRightIcon } from "lucide-react";
+import Link from "next/link";
 import { FolioShell } from "@/components/folio-shell";
-import { ReadingList } from "@/components/reading-list";
 import { site, type WorkItem } from "@/lib/site";
 
 function ProjectList({ items }: { items: WorkItem[] }) {
@@ -86,8 +86,6 @@ export default function Home() {
             <ProjectList items={site.fun} />
           </section>
 
-          <ReadingList />
-
           <footer className="foot">
             <a href={site.github} rel="me noreferrer">
               github
@@ -107,6 +105,10 @@ export default function Home() {
                 <span className="sr-only">, PDF not linked yet</span>
               </span>
             )}
+            <span className="sep" aria-hidden="true">
+              ·
+            </span>
+            <Link href="/reading">reading</Link>
           </footer>
           <noscript>
             <p className="noscript">

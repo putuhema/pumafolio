@@ -12,11 +12,11 @@ type Link = {
   readAt: number | null;
 };
 
-const SHOWN = 6;
-
 const url = process.env.NEXT_PUBLIC_CONVEX_URL;
-// One client for the page. Null until Convex is set up, and then nothing renders.
+// One client for the page. Null until Convex is set up.
 const client = url ? new ConvexReactClient(url) : null;
+
+const day = new Intl.DateTimeFormat("en", { day: "numeric", month: "short" });
 
 function host(link: string) {
   try {
@@ -26,46 +26,72 @@ function host(link: string) {
   }
 }
 
-function List() {
-  const links = useQuery(anyApi.links.list, {}) as Link[] | undefined;
-  if (!links || links.length === 0) return null;
-  // Unread first, then the most recently read.
-  const shown = [
-    ...links.filter((l) => l.readAt === null),
-    ...links.filter((l) => l.readAt !== null),
-  ].slice(0, SHOWN);
-
+function Items({ links, verb }: { links: Link[]; verb: "saved" | "read" }) {
   return (
-    <section className="work reading" id="reading">
-      <h2>reading</h2>
-      <ul>
-        {shown.map((link) => (
-          <li key={link.id} className="work-item">
-            <div className="work-body">
-              <p className="work-name">{link.title}</p>
-              <p className="work-desc">
-                {host(link.url)}
-                {link.readAt !== null ? " · read" : ""}
-              </p>
-            </div>
-            <a className="view" href={link.url} target="_blank" rel="noreferrer">
-              open
-              <ArrowUpRightIcon aria-hidden="true" />
-              <span className="sr-only"> {link.title}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <ul>
+      {links.map((link) => (
+        <li key={link.id} className="work-item">
+          <div className="work-body">
+            <p className="work-name">
+              <a
+                className="reading-title"
+                href={link.url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {link.title}
+              </a>
+            </p>
+            <p className="work-desc">
+              {host(link.url)} · {verb}{" "}
+              {day.format(verb === "read" ? link.readAt! : link.savedAt)}
+            </p>
+          </div>
+          <ArrowUpRightIcon className="reading-arrow" aria-hidden="true" />
+        </li>
+      ))}
+    </ul>
   );
 }
 
-/** Putu's public reading list, live from Convex. */
+function Lists() {
+  const links = useQuery(anyApi.links.list, {}) as Link[] | undefined;
+  if (links === undefined) return <p className="reading-note">Loading…</p>;
+  if (links.length === 0) return <p className="reading-note">Nothing saved yet.</p>;
+
+  const toRead = links.filter((l) => l.readAt === null);
+  const read = links
+    .filter((l) => l.readAt !== null)
+    .sort((a, b) => b.readAt! - a.readAt!);
+
+  return (
+    <>
+      <section className="work" id="to-read">
+        <h2>to read</h2>
+        {toRead.length ? (
+          <Items links={toRead} verb="saved" />
+        ) : (
+          <p className="reading-note">All caught up.</p>
+        )}
+      </section>
+      {read.length ? (
+        <section className="work" id="read">
+          <h2>read</h2>
+          <Items links={read} verb="read" />
+        </section>
+      ) : null}
+    </>
+  );
+}
+
+/** Putu's whole reading list, live from Convex. */
 export function ReadingList() {
-  if (!client) return null;
+  if (!client) {
+    return <p className="reading-note">The reading list isn&apos;t set up yet.</p>;
+  }
   return (
     <ConvexProvider client={client}>
-      <List />
+      <Lists />
     </ConvexProvider>
   );
 }

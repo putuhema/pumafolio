@@ -40,3 +40,28 @@ describe("reading list links", () => {
     }
   });
 });
+
+describe("owner key attempts", () => {
+  it("blocks an IP after 5 wrong keys in 15 minutes, for an hour", async () => {
+    const { ownerBlockedFor, recordOwnerFailure, clearOwnerFailures, resetOwnerLimit } =
+      await import("./links");
+    resetOwnerLimit();
+    const t0 = 1_000_000;
+    for (let i = 0; i < 4; i++) recordOwnerFailure("1.2.3.4", t0 + i);
+    assert.equal(ownerBlockedFor("1.2.3.4", t0 + 10), 0);
+    recordOwnerFailure("1.2.3.4", t0 + 5);
+    assert.ok(ownerBlockedFor("1.2.3.4", t0 + 10) > 3500);
+    assert.equal(ownerBlockedFor("5.6.7.8", t0 + 10), 0, "other IPs unaffected");
+    assert.equal(ownerBlockedFor("1.2.3.4", t0 + 5 + 60 * 60 * 1000), 0, "unblocks after an hour");
+
+    // Failures spread past 15 minutes don't add up.
+    for (let i = 0; i < 8; i++) recordOwnerFailure("9.9.9.9", t0 + i * 16 * 60 * 1000);
+    assert.equal(ownerBlockedFor("9.9.9.9", t0 + 8 * 16 * 60 * 1000), 0);
+
+    // A right key clears the count.
+    for (let i = 0; i < 4; i++) recordOwnerFailure("2.2.2.2", t0 + i);
+    clearOwnerFailures("2.2.2.2");
+    recordOwnerFailure("2.2.2.2", t0 + 10);
+    assert.equal(ownerBlockedFor("2.2.2.2", t0 + 11), 0);
+  });
+});

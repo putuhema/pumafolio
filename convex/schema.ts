@@ -12,4 +12,9 @@ export default defineSchema({
   })
     .index("by_url", ["url"])
     .index("by_savedAt", ["savedAt"]),
+
+  /** One row per wrong owner key, kept for an hour. See convex/links.ts. */
+  ownerFailures: defineTable({
+    at: v.number(),
+  }).index("by_at", ["at"]),
 });

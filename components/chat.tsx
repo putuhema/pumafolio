@@ -75,11 +75,16 @@ function linkify(text: string) {
     const target = part.replace(/[),.;:]+$/, "");
     const tail = part.slice(target.length);
     const isUrl = target.startsWith("http");
+    // Links to this site (like /reading) open in the same tab.
+    const external =
+      isUrl &&
+      (typeof window === "undefined" ||
+        !target.startsWith(`${window.location.origin}/`));
     return (
       <span key={i}>
         <a
           href={isUrl ? target : `mailto:${target}`}
-          {...(isUrl ? { target: "_blank", rel: "noreferrer" } : {})}
+          {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
         >
           {isUrl ? linkLabel(target) : target}
         </a>
