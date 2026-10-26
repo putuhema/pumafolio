@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Saved Articles settings</title>
+<style>
+  :root {
+    --paper: #fdf7f9; --ink: #2a1520; --line: #ecd3dd; --quiet: #8a6474;
+    --pink: #d6336c; --pink-ink: #fff5f8; --pink-soft: #f8dbe6;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main { max-width: 34rem; margin: 0 auto; padding: 48px 16px; }
+  h1 { font-size: 1.05rem; margin: 0 0 4px; }
+  .lead { color: var(--quiet); margin: 0 0 28px; }
+  label { display: block; font-weight: 600; font-size: 0.92rem; margin: 18px 0 6px; }
+  .hint { display: block; color: var(--quiet); font-weight: 400; font-size: 0.85rem; }
+  input[type="url"], input[type="password"] {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px;
+    background: #fff; color: var(--ink); font: inherit;
+  }
+  input:focus-visible { outline: 2px solid var(--pink); outline-offset: 1px; border-color: transparent; }
+  .toggle { display: flex; gap: 10px; align-items: flex-start; margin-top: 22px; font-weight: 600; font-size: 0.92rem; }
+  .toggle input { margin-top: 4px; accent-color: var(--pink); width: 16px; height: 16px; }
+  .row { display: flex; gap: 10px; align-items: center; margin-top: 28px; flex-wrap: wrap; }
+  button {
+    border: 0; border-radius: 10px; padding: 10px 16px; font: inherit; font-weight: 600;
+    cursor: pointer; transition: background 120ms;
+  }
+  #save { background: var(--pink); color: var(--pink-ink); }
+  #save:hover { background: #c22a5f; }
+  #save:disabled { opacity: 0.6; cursor: default; }
+  #status { color: var(--quiet); font-size: 0.9rem; }
+  #status.ok { color: #2f7a4b; }
+  #status.err { color: #b4234f; }
+  .ways { margin-top: 36px; padding-top: 4px; color: var(--quiet); font-size: 0.9rem; }
+  .ways h2 { font-size: 0.92rem; color: var(--ink); margin: 0 0 6px; }
+  .ways ul { margin: 0; padding-left: 1.1rem; }
+  kbd { font: 0.8rem ui-monospace, Menlo, monospace; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+  a { color: var(--pink); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Saved Articles</h1>
+  <p class="lead">Save links straight to your saved articles page.</p>
+
+  <form id="form">
+    <label for="siteUrl">Your site
+      <span class="hint">Where the portfolio runs, for example https://putu.dev or http://localhost:3000</span>
+    </label>
+    <input id="siteUrl" type="url" required placeholder="https://your-site.com" autocomplete="off">
+
+    <label for="key">Owner key
+      <span class="hint">The same key you use with /unlock. It's stored only on this computer.</span>
+    </label>
+    <input id="key" type="password" required autocomplete="off">
+
+    <label class="toggle">
+      <input id="copyPrompt" type="checkbox">
+      <span>Offer to save when I copy a link
+        <span class="hint">Shows a small prompt in the corner. Chrome will ask to let the extension run on all sites.</span>
+      </span>
+    </label>
+
+    <div class="row">
+      <button id="save" type="submit">Save and test</button>
+      <span id="status" role="status" aria-live="polite"></span>
+    </div>
+  </form>
+
+  <section class="ways">
+    <h2>Ways to save</h2>
+    <ul>
+      <li>Click the toolbar icon to save the page you're on.</li>
+      <li>Press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>. Change it at <a href="#" id="shortcuts">chrome://extensions/shortcuts</a>.</li>
+      <li>Right-click a link or a page and choose "Save to saved articles".</li>
+      <li>Copy a link on a page and click Save in the prompt (if turned on above).</li>
+    </ul>
+  </section>
+</main>
+<script type="module" src="options.js"></script>
+</body>
+</html>
