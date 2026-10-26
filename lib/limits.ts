@@ -39,3 +39,32 @@ export function thinkDelayMs() {
 export function tokenDelayMs() {
   return intFromEnv("CHAT_TOKEN_DELAY_MS", 18, true);
 }
+
+/** Messages per IP in a short burst window. Stops scripted spam. */
+export function burstLimit() {
+  return intFromEnv("CHAT_BURST_LIMIT", 3);
+}
+
+export function burstWindowMs() {
+  return intFromEnv("CHAT_BURST_WINDOW_MS", 60 * 1000);
+}
+
+/** Messages per IP per day. */
+export function dailyLimit() {
+  return intFromEnv("CHAT_DAILY_LIMIT", 30);
+}
+
+/** Off-topic or injection attempts per IP (within the rate window) before a timeout. */
+export function strikeLimit() {
+  return intFromEnv("CHAT_STRIKE_LIMIT", 3);
+}
+
+/** How long an IP is blocked after too many strikes. */
+export function strikeCooldownMs() {
+  return intFromEnv("CHAT_STRIKE_COOLDOWN_MS", 60 * 60 * 1000);
+}
+
+/** Model calls per day across all visitors. Past this, Puma uses canned answers. */
+export function globalDailyModelLimit() {
+  return intFromEnv("CHAT_GLOBAL_DAILY_LIMIT", 500);
+}

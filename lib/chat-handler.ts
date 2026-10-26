@@ -1,4 +1,5 @@
-import { answerQuestion } from "./canned";
+import { answerQuestion, DECLINE } from "./canned";
+import { checkInput, checkOutput } from "./guard";
 import { systemPrompt } from "./knowledge";
 import {
   historyLimit,
@@ -9,10 +10,18 @@ import {
 } from "./limits";
 import { sanitizeMessages } from "./messages";
 import { redact, resolveProvider, streamModel } from "./provider";
-import { checkRateLimit, clientIp } from "./rate-limit";
+import {
+  checkRateLimit,
+  clientIp,
+  recordStrike,
+  takeModelBudget,
+} from "./rate-limit";
 
 const BUSY =
   "Puma couldn't reach the model. Try again in a bit.";
+
+const TIMED_OUT =
+  "Puma only answers questions about Putu. Try again later.";
 
 function json(status: number, error: string, extra?: HeadersInit) {
   return Response.json(
@@ -105,19 +114,36 @@ export async function handleChat(request: Request) {
   const parsed = sanitizeMessages(payload, maxInputChars(), historyLimit());
   if (!parsed.ok) return json(parsed.status, parsed.error);
 
-  const limit = checkRateLimit(clientIp(request));
+  const ip = clientIp(request);
+  const limit = checkRateLimit(ip);
   if (!limit.ok) {
-    return json(
-      429,
-      "That's enough questions for this hour. Come back later.",
-      { "Retry-After": String(limit.retryAfterSec) },
-    );
+    const message =
+      limit.reason === "blocked"
+        ? TIMED_OUT
+        : limit.reason === "burst"
+          ? "Slow down a little. Try again in a minute."
+          : "That's enough questions for now. Come back later.";
+    return json(429, message, { "Retry-After": String(limit.retryAfterSec) });
   }
 
+  const decline = (source: string) => {
+    const timedOut = recordStrike(ip);
+    return streamPlain(
+      timedOut ? TIMED_OUT : DECLINE,
+      { "X-Puma-Source": source, "X-Puma-Mood": "idle" },
+      request.signal,
+    );
+  };
+
+  // Tricks and off-topic jobs stop here, before any model call.
+  const input = checkInput(parsed.messages);
+  if (!input.ok) return decline(`guard-${input.reason}`);
+
   const provider = resolveProvider();
-  if (!provider) {
+  if (!provider || !takeModelBudget()) {
     const last = parsed.messages[parsed.messages.length - 1]!;
     const answer = answerQuestion(last.content);
+    if (answer.text === DECLINE) return decline("canned");
     return streamPlain(
       answer.text,
       {
@@ -128,6 +154,7 @@ export async function handleChat(request: Request) {
     );
   }
 
+  let reply = "";
   try {
     const result = streamModel({
       provider,
@@ -137,16 +164,29 @@ export async function handleChat(request: Request) {
       abortSignal: request.signal,
     });
 
-    return result.toTextStreamResponse({
-      headers: {
-        "Cache-Control": "no-store",
-        "X-Accel-Buffering": "no",
-        "X-Puma-Source": "model",
-      },
-    });
+    // Read the whole reply first so it can be checked before the visitor sees it.
+    for await (const part of result.fullStream) {
+      if (part.type === "text-delta") reply += part.text;
+      else if (part.type === "error") throw part.error;
+    }
   } catch (error) {
+    if (request.signal.aborted) return new Response(null, { status: 499 });
     const message = error instanceof Error ? error.message : String(error);
     console.error("[puma]", redact(message, provider.apiKey));
     return json(502, BUSY);
   }
+
+  const output = checkOutput(reply);
+  if (!output.ok) {
+    if (output.reason === "leak") {
+      console.warn("[puma] blocked a reply that looked like a prompt leak");
+    }
+    return decline(`model-${output.reason}`);
+  }
+
+  return streamPlain(
+    reply.trim(),
+    { "X-Puma-Source": "model", "X-Puma-Mood": "idea" },
+    request.signal,
+  );
 }
