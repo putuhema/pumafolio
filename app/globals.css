@@ -219,13 +219,30 @@ h2 {
   cursor: default;
 }
 
-/* /saved page */
+/* /saved page: monochrome, with neutral greys instead of the pink theme. */
+.saved {
+  --mono-ink: #111111;
+  --mono-quiet: #737373;
+  --mono-hover: rgb(0 0 0 / 4.5%);
+  --mono-press: rgb(0 0 0 / 8%);
+  --mono-tile: rgb(0 0 0 / 6.5%);
+  color: var(--mono-ink);
+}
+
+:root[data-theme="dark"] .saved {
+  --mono-ink: #f2f2f2;
+  --mono-quiet: #a3a3a3;
+  --mono-hover: rgb(255 255 255 / 6%);
+  --mono-press: rgb(255 255 255 / 10%);
+  --mono-tile: rgb(255 255 255 / 9%);
+}
+
 .saved-back {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
   margin: 0 0 1.1rem -0.1rem;
-  color: var(--quiet);
+  color: var(--mono-quiet);
   font-size: 0.875rem;
   text-decoration: none;
   transition: color 120ms var(--ease-out);
@@ -236,7 +253,7 @@ h2 {
 }
 
 .saved-back:hover {
-  color: var(--pink);
+  color: var(--mono-ink);
 }
 
 .saved-back span {
@@ -267,11 +284,11 @@ h2 {
 }
 
 .saved-item:hover {
-  background: var(--pink-soft);
+  background: var(--mono-hover);
 }
 
 .saved-item:active {
-  background: color-mix(in srgb, var(--pink-soft) 80%, var(--pink));
+  background: var(--mono-press);
 }
 
 .saved-tile {
@@ -281,8 +298,8 @@ h2 {
   width: 1.5rem;
   height: 1.5rem;
   border-radius: 0.4rem;
-  background: var(--pink-soft);
-  color: var(--pink);
+  background: var(--mono-tile);
+  color: var(--mono-ink);
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -290,7 +307,8 @@ h2 {
 }
 
 .saved-item:hover .saved-tile {
-  background: var(--paper);
+  background: var(--mono-ink);
+  color: var(--paper);
 }
 
 .saved-text {
@@ -310,13 +328,15 @@ h2 {
 }
 
 .saved-item:hover .saved-title {
-  color: var(--pink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
 .saved-host,
 .saved-date {
   flex-shrink: 0;
-  color: var(--quiet);
+  color: var(--mono-quiet);
   font-size: 0.85rem;
 }
 
@@ -332,7 +352,7 @@ h2 {
 
 .saved-note {
   margin: 0;
-  color: var(--quiet);
+  color: var(--mono-quiet);
 }
 
 .saved > h1 + .saved-note {
