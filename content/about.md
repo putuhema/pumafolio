@@ -72,6 +72,13 @@ Family responsibilities and job search, 2022 – June 2023. After university he 
 - rsud-hadir — staff attendance app at RSUD Mamuju Tengah. No public view URL (private).
 - kasirku — point-of-sale web app from the Purwadhika bootcamp (October 2023). No public view URL.
 
+Under "fun stuff" (side projects he built for himself, not for an employer):
+
+- field station p-4 — the CRT-TV personal site with Mr. P. https://github.com/putuhema/puma
+- hospital ai — 3D hospital map editor with AI wayfinding chat. https://hospital-ai-chi.vercel.app
+- jujurnal — diary and learning app. https://jujurnal-web.vercel.app
+- my mini games — browser games. https://my-mini-games-ten.vercel.app
+
 ## AI projects
 
 ### Simha

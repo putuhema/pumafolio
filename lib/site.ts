@@ -66,4 +66,31 @@ export const site = {
       href: null,
     },
   ] satisfies WorkItem[],
+  /** Side projects built for fun, not for an employer. */
+  fun: [
+    {
+      slug: "field-station-p4",
+      name: "field station p-4",
+      description: "a CRT-TV personal site with a 3D host named Mr. P",
+      href: "https://github.com/putuhema/puma",
+    },
+    {
+      slug: "hospital-ai",
+      name: "hospital ai",
+      description: "3D hospital map editor with an AI wayfinding chat",
+      href: "https://hospital-ai-chi.vercel.app",
+    },
+    {
+      slug: "jujurnal",
+      name: "jujurnal",
+      description: "a diary and learning app",
+      href: "https://jujurnal-web.vercel.app",
+    },
+    {
+      slug: "my-mini-games",
+      name: "my mini games",
+      description: "a small collection of browser games",
+      href: "https://my-mini-games-ten.vercel.app",
+    },
+  ] satisfies WorkItem[],
 };

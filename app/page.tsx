@@ -1,19 +1,37 @@
-import {
-  ArrowUpRightIcon,
-  CalendarCheckIcon,
-  DatabaseIcon,
-  FolderIcon,
-  ReceiptIcon,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowUpRightIcon } from "lucide-react";
 import { FolioShell } from "@/components/folio-shell";
-import { site } from "@/lib/site";
+import { site, type WorkItem } from "@/lib/site";
 
-const WORK_ICONS: Record<string, LucideIcon> = {
-  simha: DatabaseIcon,
-  "rsud-hadir": CalendarCheckIcon,
-  kasirku: ReceiptIcon,
-};
+function ProjectList({ items }: { items: WorkItem[] }) {
+  return (
+    <ul>
+      {items.map((item) => (
+        <li key={item.slug} className="work-item">
+          <div className="work-body">
+            <p className="work-name">{item.name}</p>
+            <p className="work-desc">{item.description}</p>
+          </div>
+          {item.href ? (
+            <a
+              className="view"
+              href={item.href}
+              target="_blank"
+              rel="noreferrer"
+            >
+              view
+              <ArrowUpRightIcon aria-hidden="true" />
+              <span className="sr-only"> {item.name}</span>
+            </a>
+          ) : (
+            <span className="view pending" title="No public link yet">
+              private
+            </span>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -59,38 +77,12 @@ export default function Home() {
 
           <section className="work" id="work">
             <h2>work</h2>
-            <ul>
-              {site.work.map((item) => {
-                const Icon = WORK_ICONS[item.slug] ?? FolderIcon;
-                return (
-                  <li key={item.slug} className="work-item">
-                    <span className="work-icon" aria-hidden="true">
-                      <Icon />
-                    </span>
-                    <div className="work-body">
-                      <p className="work-name">{item.name}</p>
-                      <p className="work-desc">{item.description}</p>
-                    </div>
-                    {item.href ? (
-                      <a
-                        className="view"
-                        href={item.href}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        view
-                        <ArrowUpRightIcon aria-hidden="true" />
-                        <span className="sr-only"> {item.name}</span>
-                      </a>
-                    ) : (
-                      <span className="view pending" title="No public link yet">
-                        private
-                      </span>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+            <ProjectList items={site.work} />
+          </section>
+
+          <section className="work" id="fun">
+            <h2>fun stuff</h2>
+            <ProjectList items={site.fun} />
           </section>
 
           <footer className="foot">
