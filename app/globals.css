@@ -219,50 +219,111 @@ h2 {
   cursor: default;
 }
 
-/* /reading page */
-.profile a.home-link {
+/* /saved page */
+.saved-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 1.1rem -0.1rem;
+  color: var(--quiet);
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: color 120ms var(--ease-out);
+}
+
+.profile a.saved-back {
   text-decoration: none;
 }
 
-.profile a.reading-title {
+.saved-back:hover {
+  color: var(--pink);
+}
+
+.saved-back span {
+  transition: transform 160ms var(--ease-out);
+}
+
+.saved-back:hover span {
+  transform: translateX(-2px);
+}
+
+.saved-section {
+  margin-top: 1.75rem;
+}
+
+.saved-section h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.saved-count {
+  color: var(--quiet);
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.saved-list {
+  max-width: 40rem;
+  margin: 0 -0.6rem;
+  padding: 0;
+  list-style: none;
+}
+
+.profile a.saved-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.55rem 0.6rem;
+  border-radius: 0.6rem;
+  color: inherit;
   text-decoration: none;
+  transition: background-color 120ms var(--ease-out);
 }
 
-.profile a.reading-title:hover {
-  color: var(--pink);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
+.saved-item:hover {
+  background: var(--pink-soft);
 }
 
-/* The whole row opens the link: stretch the title's hit area over it. */
-.work-item:has(.reading-title) {
-  position: relative;
+.saved-item:active {
+  background: color-mix(in srgb, var(--pink-soft) 80%, var(--pink));
 }
 
-.reading-title::after {
-  content: "";
-  position: absolute;
-  inset: 0;
+.saved-title {
+  font-weight: 600;
+  transition: color 120ms var(--ease-out);
 }
 
-.reading-arrow {
-  flex-shrink: 0;
-  width: 0.95rem;
-  height: 0.95rem;
-  color: var(--quiet);
-}
-
-.work-item:has(.reading-title:hover) .reading-arrow {
+.saved-item:hover .saved-title {
   color: var(--pink);
 }
 
-.reading-note {
-  margin: 1.75rem 0 0;
+.saved-item-done .saved-title {
+  color: var(--quiet);
+  font-weight: 500;
+}
+
+.saved-meta {
+  color: var(--quiet);
+  font-size: 0.85rem;
+}
+
+.saved-note {
+  margin: 0;
   color: var(--quiet);
 }
 
-.work .reading-note {
-  margin-top: 0;
+.saved > h1 + .saved-note {
+  margin-top: 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .saved-back span,
+  .saved-item,
+  .saved-title {
+    transition: none;
+  }
 }
 
 .foot {

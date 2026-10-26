@@ -9,7 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
-      url: `${site.url}/reading`,
+      url: `${site.url}/saved`,
       changeFrequency: "weekly",
       priority: 0.5,
     },

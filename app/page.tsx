@@ -108,7 +108,7 @@ export default function Home() {
             <span className="sep" aria-hidden="true">
               ·
             </span>
-            <Link href="/reading">reading</Link>
+            <Link href="/saved">saved articles</Link>
           </footer>
           <noscript>
             <p className="noscript">

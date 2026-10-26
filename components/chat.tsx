@@ -54,7 +54,7 @@ const COMMANDS: Command[] = [
   { name: "cv", hint: "his CV in 3 lines", ask: "Summarize his CV in 3 lines" },
   { name: "hire", hint: "is he open to work", ask: "Is Putu open to new work?" },
   { name: "contact", hint: "email, github", ask: "How can I contact Putu?" },
-  { name: "reading", hint: "what he's reading" },
+  { name: "saved", hint: "his saved articles" },
   { name: "save", hint: "save a link to read", arg: true, owner: true },
   { name: "read", hint: "mark a link as read", arg: true, owner: true },
   { name: "remove", hint: "remove an unread link", arg: true, owner: true },
@@ -75,7 +75,7 @@ function linkify(text: string) {
     const target = part.replace(/[),.;:]+$/, "");
     const tail = part.slice(target.length);
     const isUrl = target.startsWith("http");
-    // Links to this site (like /reading) open in the same tab.
+    // Links to this site (like /saved) open in the same tab.
     const external =
       isUrl &&
       (typeof window === "undefined" ||

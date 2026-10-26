@@ -75,6 +75,8 @@ const topics: Topic[] = [
   {
     id: "reading",
     keys: [
+      "saved articles",
+      "saved",
       "reading list",
       "reading",
       "read later",
@@ -84,7 +86,7 @@ const topics: Topic[] = [
       "bacaan",
     ],
     mood: "idea",
-    answer: `Putu keeps a public reading list of what he's reading and has finished: ${site.url}/reading`,
+    answer: `Putu keeps a public list of saved articles, the ones he's reading and has finished: ${site.url}/saved`,
   },
   {
     id: "puma",

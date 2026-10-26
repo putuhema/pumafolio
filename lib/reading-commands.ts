@@ -51,15 +51,16 @@ async function loadLinks(): Promise<Link[] | string> {
     links?: Link[];
     error?: string;
   };
-  if (!res.ok || !data.links) return data.error ?? "Couldn't load the reading list.";
+  if (!res.ok || !data.links) return data.error ?? "Couldn't load saved articles.";
   return data.links;
 }
 
-const NOT_OWNER = "Only Putu can change the reading list. Try /reading to see it.";
+const NOT_OWNER = "Only Putu can change saved articles. Try /saved to see them.";
 
 /** Names handled here, so the chat can route them. */
 export const READING_COMMANDS = [
   "save",
+  "saved",
   "reading",
   "read",
   "remove",
@@ -90,7 +91,7 @@ export async function runReadingCommand(
       }
       case "lock":
         setKey(null);
-        return "Locked. This browser can't change the reading list now.";
+        return "Locked. This browser can't change saved articles now.";
       case "save": {
         const key = getKey();
         if (!key) return NOT_OWNER;
@@ -104,19 +105,20 @@ export async function runReadingCommand(
         if (!ok) return String(data.error ?? "Couldn't save that link.");
         const title = String(data.title ?? arg);
         return data.duplicate
-          ? `**${title}** is already on the reading list.`
-          : `Saved **${title}** to the reading list.\n\n${String(data.url)}`;
+          ? `**${title}** is already in saved articles.`
+          : `Saved **${title}** to saved articles.\n\n${String(data.url)}`;
       }
+      case "saved":
       case "reading": {
         const links = await loadLinks();
         if (typeof links === "string") return links;
-        const page = `${window.location.origin}/reading`;
+        const page = `${window.location.origin}/saved`;
         const unread = links.filter((l) => l.readAt === null);
         const readCount = links.length - unread.length;
         if (links.length === 0) {
-          return `Putu's reading list is empty for now: ${page}`;
+          return `Putu hasn't saved any articles yet: ${page}`;
         }
-        const summary = `Putu has ${unread.length} to read and ${readCount} read. See the whole list: ${page}`;
+        const summary = `Putu has ${unread.length} saved articles to read and ${readCount} read. See them all: ${page}`;
         // Only the owner needs numbers, for /read and /remove.
         if (!getKey() || unread.length === 0) return summary;
         const lines = [summary, "", "To read, numbered for /read and /remove:", ""];
@@ -128,7 +130,7 @@ export async function runReadingCommand(
         if (!key) return NOT_OWNER;
         const n = Number.parseInt(arg, 10);
         if (!Number.isInteger(n) || n < 1) {
-          return "Type /remove followed by a number from /reading.";
+          return "Type /remove followed by a number from /saved.";
         }
         const links = await loadLinks();
         if (typeof links === "string") return links;
@@ -147,7 +149,7 @@ export async function runReadingCommand(
         if (!key) return NOT_OWNER;
         const n = Number.parseInt(arg, 10);
         if (!Number.isInteger(n) || n < 1) {
-          return "Type /read followed by a number from /reading.";
+          return "Type /read followed by a number from /saved.";
         }
         const links = await loadLinks();
         if (typeof links === "string") return links;
@@ -163,6 +165,6 @@ export async function runReadingCommand(
       }
     }
   } catch {
-    return "Couldn't reach the reading list. Try again in a bit.";
+    return "Couldn't reach saved articles. Try again in a bit.";
   }
 }

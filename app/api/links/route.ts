@@ -10,7 +10,9 @@ import {
   recordOwnerFailure,
   type Link,
 } from "@/lib/links";
+import { revalidateTag } from "next/cache";
 import { clientIp } from "@/lib/rate-limit";
+import { LINKS_TAG } from "@/lib/saved-links";
 
 const noStore = { "Cache-Control": "no-store" };
 
@@ -36,15 +38,15 @@ function denied(result: unknown) {
     : json(401, { error: "Only Putu can do that." });
 }
 
-/** Public reading list, newest first. */
+/** Public saved-articles list, newest first. */
 export async function GET() {
   const client = convexClient();
-  if (!client) return json(503, { error: "The reading list isn't set up yet." });
+  if (!client) return json(503, { error: "Saved articles aren't set up yet." });
   try {
     const links = (await client.query(linksApi.list, {})) as Link[];
     return json(200, { links });
   } catch {
-    return json(502, { error: "Couldn't load the reading list." });
+    return json(502, { error: "Couldn't load saved articles." });
   }
 }
 
@@ -73,7 +75,7 @@ export async function POST(request: Request) {
   if (body.action === "unlock") return json(200, { ok: true });
 
   const client = convexClient();
-  if (!client) return json(503, { error: "The reading list isn't set up yet." });
+  if (!client) return json(503, { error: "Saved articles aren't set up yet." });
 
   try {
     if (body.action === "save") {
@@ -91,6 +93,7 @@ export async function POST(request: Request) {
       const refused = denied(result);
       if (refused) return refused;
       const { id, duplicate } = result as { id: string; duplicate: boolean };
+      if (!duplicate) revalidateTag(LINKS_TAG, "max");
       return json(200, { id, duplicate, title, url: url.toString() });
     }
     if (body.action === "read" || body.action === "remove") {
@@ -98,10 +101,11 @@ export async function POST(request: Request) {
       const fn = body.action === "read" ? linksApi.markRead : linksApi.remove;
       const refused = denied(await client.mutation(fn, { key: key!, id: body.id }));
       if (refused) return refused;
+      revalidateTag(LINKS_TAG, "max");
       return json(200, { ok: true });
     }
   } catch {
-    return json(502, { error: "Couldn't update the reading list." });
+    return json(502, { error: "Couldn't update saved articles." });
   }
   return json(400, { error: "Bad request." });
 }

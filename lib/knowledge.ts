@@ -2,14 +2,14 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { site } from "./site";
 
-/** The reading list section depends on the site URL, so it's added here, not in about.md. */
+/** The saved-articles section depends on the site URL, so it's added here, not in about.md. */
 function readingKnowledge() {
   return `
 
-## Reading list
+## Saved articles
 
-Putu keeps a public reading list of articles he is saving to read and the ones he has finished: ${site.url}/reading
-You can't see the items on it. When someone asks what Putu is reading, reads, or recommends, give that link and say the page shows what he's reading and has read. Do not name any article.`;
+Putu keeps a public page of saved articles: the ones he is saving to read and the ones he has finished: ${site.url}/saved
+You can't see the items on it. When someone asks what Putu is reading, reads, or has saved, give that link and say the page shows his saved articles. Do not name any article.`;
 }
 
 export function loadKnowledge() {

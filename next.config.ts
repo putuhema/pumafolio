@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
     "/icon": ["./fonts/**/*"],
     "/apple-icon": ["./fonts/**/*"],
   },
+  async redirects() {
+    // The reading list moved to /saved.
+    return [{ source: "/reading", destination: "/saved", permanent: true }];
+  },
   async headers() {
     return [
       {
