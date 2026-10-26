@@ -7,7 +7,7 @@ This is the only source the portfolio chatbot may use. It is taken from Putu's C
 - Goes by Putu Mahendra. Full name: Putu Hendra Mahendra.
 - GitHub and LinkedIn handle: putuhema.
 - Location: Mamuju, West Sulawesi, Indonesia. Time zone WITA (UTC+8).
-- Work preference: open to remote. On-site, hybrid, and relocation cities are not published.
+- Work preference: open to remote. On-site, hybrid, and willing to relocated to anywhere.
 - Email: putuhendramahendra@gmail.com
 - GitHub: https://github.com/putuhema
 - LinkedIn: https://www.linkedin.com/in/putuhema
@@ -70,12 +70,10 @@ Family responsibilities and job search, 2022 – June 2023. After university he 
 
 - simha — AI assistant for hospital databases, read-only by design. View: https://github.com/putuhema/simha
 - rsud-hadir — staff attendance app at RSUD Mamuju Tengah. No public view URL (private).
-- kasirku — point-of-sale web app from the Purwadhika bootcamp (October 2023). No public view URL.
+- hospital ai — 3D hospital map editor with AI wayfinding chat. https://hospital-ai-chi.vercel.app
 
 Under "fun stuff" (side projects he built for himself, not for an employer):
 
-- field station p-4 — the CRT-TV personal site with Mr. P. https://github.com/putuhema/puma
-- hospital ai — 3D hospital map editor with AI wayfinding chat. https://hospital-ai-chi.vercel.app
 - jujurnal — diary and learning app. https://jujurnal-web.vercel.app
 - my mini games — browser games. https://my-mini-games-ten.vercel.app
 
@@ -107,27 +105,10 @@ Full-stack AI pharmacy assistant. Private. 2026. Next.js 15 (T3), tRPC, Drizzle,
 
 Knowledge-base chatbot for the hospital system. Private. 2026. Next.js 16, Groq. Answers cite the knowledge-base articles they come from.
 
-### PUMS Knowledge Base
-
-Private. 2026. Live: https://pums-kb.vercel.app Stack: SvelteKit, Turso (SQLite FTS5), offline support, Vitest.
-
-### Field Station P-4 (puma)
-
-A different personal site, styled as a CRT television, with a 3D host named Mr. P. 2026. Repo: https://github.com/putuhema/puma
-
-Stack: Next.js 16, React 19, Convex, Three.js, MDX, Tailwind CSS, Web Audio. It streams LLM replies that can mount live UI (a dossier, project shelf, contact form, and game) and falls back to an offline phrasebook. Real-time chat, guestbook, and high scores on Convex. Keyboard-first, plus a printable recruiter page.
-
-This portfolio (the page you are on) is a separate, newer site. It has no mascot. Do not describe one, and do not confuse it with Field Station P-4.
-
 ## Other projects
 
 - Jujurnal: a diary and learning app (Turborepo, Next.js 16, Convex, Better Auth). https://jujurnal-web.vercel.app 2026.
 - My Mini Games: a collection of browser games. https://my-mini-games-ten.vercel.app 2026.
-- Athena, English With Me, GetToKnowMe, STT Dharma Laksana site: other web apps, TypeScript, private, 2026. One-line descriptions are not published.
-- Taiyo, Commonplace Book, Reader, Birthday / Invitation: small personal web apps, 2026. No further description is published.
-- Admin EE: an admin dashboard with user and role management. TypeScript. 2024.
-- phema.dev: earlier portfolio and blog. Next.js, Tailwind, shadcn/ui. Includes the write-up "My First AI" on a memory-based AI opponent for a card game. https://putuhema-dev.vercel.app 2024.
-- Minigame: clones of games he found interesting. Next.js, TypeScript. 2024.
 
 Purwadhika bootcamp, 2023:
 
@@ -140,13 +121,12 @@ University:
 - Giziku, thesis: a stunting-detection web app that measures child growth against anthropometric standards (Express, Pug, MySQL, sessions/auth). December 2021 – February 2022. The exact thesis title is not published.
 - E-Gov: a campus project, December 2021. No description is published.
 - Bawaslu QR: a web app (EJS), October–November 2021. A one-line description is not published.
-- Book API: a REST API for a book directory. January 2021.
 
 ## Education
 
 Job Connector Bootcamp, Full Stack Web Development, Purwadhika Digital Technology School. Online cohort, evening classes. July 2023 through an end month that is not published. Graduated by January 2024. Built Hangout, Kasirku, and the Toten final project. Went through Purwadhika Career Network (PCN) career preparation after graduating (February 2024; the session date listed is 5 February 2024).
 
-Bachelor of Information Systems (S1 Sistem Informasi). Started 2018. University name, city, graduation year, and GPA are not published. Do not guess them. Thesis: Giziku.
+Bachelor of Information Systems (S1 Sistem Informasi). Started 2018. Universitas Dipa Makassar, Makassar, 2022, 3,73 GPA. Do not guess them. Thesis: Giziku.
 
 No certifications are published. Do not invent certificates. A Coursera course is unconfirmed. Do not mention it.
 
