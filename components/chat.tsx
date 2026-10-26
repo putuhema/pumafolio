@@ -11,7 +11,7 @@ import {
 
 type Role = "user" | "assistant";
 
-type Msg = { role: Role; content: string };
+type Msg = { role: Role; content: string; stopped?: boolean };
 
 type Phase = "idle" | "thinking" | "talking";
 
@@ -60,16 +60,71 @@ function linkify(text: string) {
   });
 }
 
-/** Pair each question with the answer that follows it. */
-function toTurns(messages: Msg[]) {
-  const turns: { user?: string; answer?: string }[] = [];
-  for (const msg of messages) {
-    if (msg.role === "user") turns.push({ user: msg.content });
-    else if (turns.length && turns[turns.length - 1]!.answer === undefined) {
-      turns[turns.length - 1]!.answer = msg.content;
-    } else turns.push({ answer: msg.content });
+/** Inline formatting: **bold** and links. */
+function inline(text: string, key: string) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    /^\*\*[^*]+\*\*$/.test(part) ? (
+      <strong key={`${key}-${i}`}>{linkify(part.slice(2, -2))}</strong>
+    ) : (
+      <span key={`${key}-${i}`}>{linkify(part)}</span>
+    ),
+  );
+}
+
+const BULLET_RE = /^\s*[-*•]\s+/;
+
+/**
+ * A small formatter for Puma's answers: blank lines split paragraphs,
+ * "- " lines become a list, and "#" headings fall back to bold lines.
+ * It tolerates half-streamed text.
+ */
+function formatAnswer(text: string) {
+  const blocks: React.ReactNode[] = [];
+  let para: string[] = [];
+  let list: string[] = [];
+  const flushPara = () => {
+    if (para.length === 0) return;
+    const k = `p${blocks.length}`;
+    blocks.push(
+      <p key={k}>
+        {para.map((line, i) => (
+          <span key={i}>
+            {i > 0 ? <br /> : null}
+            {inline(line, `${k}-${i}`)}
+          </span>
+        ))}
+      </p>,
+    );
+    para = [];
+  };
+  const flushList = () => {
+    if (list.length === 0) return;
+    const k = `l${blocks.length}`;
+    blocks.push(
+      <ul key={k}>
+        {list.map((item, i) => (
+          <li key={i}>{inline(item, `${k}-${i}`)}</li>
+        ))}
+      </ul>,
+    );
+    list = [];
+  };
+  for (const raw of text.split("\n")) {
+    const line = raw.trimEnd();
+    if (!line.trim()) {
+      flushPara();
+      flushList();
+    } else if (BULLET_RE.test(line)) {
+      flushPara();
+      list.push(line.replace(BULLET_RE, ""));
+    } else {
+      flushList();
+      para.push(line.replace(/^#+\s*(.*)$/, "**$1**"));
+    }
   }
-  return turns;
+  flushPara();
+  flushList();
+  return blocks;
 }
 
 export function ChatDock({
@@ -220,9 +275,10 @@ export function ChatDock({
     const content = text.trim();
     if (!content || busy) return;
     editDraft("");
-    const history = [...messages, { role: "user" as const, content }].slice(
-      -6,
-    );
+    const history = [...messages, { role: "user" as const, content }]
+      .filter((m) => m.content.trim())
+      .slice(-6)
+      .map((m) => ({ role: m.role, content: m.content }));
     setMessages([...messages, { role: "user", content }]);
     setPhase("thinking");
     const controller = new AbortController();
@@ -274,9 +330,8 @@ export function ChatDock({
       setPhase("idle");
     } catch (error) {
       const stopped = controller.signal.aborted;
-      const message = stopped
-        ? "(stopped)"
-        : error instanceof TypeError
+      const message =
+        error instanceof TypeError
           ? "Puma couldn't reach the model. Try again in a bit."
           : error instanceof Error && error.message
             ? error.message
@@ -287,12 +342,18 @@ export function ChatDock({
         if (current.length === 0) return current;
         const copy = current.slice();
         const last = copy[copy.length - 1];
+        if (stopped) {
+          if (last?.role === "assistant") {
+            copy[copy.length - 1] = { ...last, stopped: true };
+          } else {
+            copy.push({ role: "assistant", content: "", stopped: true });
+          }
+          return copy;
+        }
         if (last?.role === "assistant" && last.content.trim()) {
           copy[copy.length - 1] = {
             role: "assistant",
-            content: stopped
-              ? `${last.content} ${message}`
-              : `${last.content}\n\n${message}`,
+            content: `${last.content}\n\n${message}`,
           };
         } else if (last?.role === "assistant") {
           copy[copy.length - 1] = { role: "assistant", content: message };
@@ -432,32 +493,49 @@ export function ChatDock({
             </ul>
           </div>
         ) : null}
-        {toTurns(messages).map((turn, i, all) => (
-          <article className="turn" key={i}>
-            {turn.user !== undefined ? (
-              <p className="msg msg-user">
-                <span className="gt" aria-hidden="true">
-                  &gt;{" "}
-                </span>
-                {turn.user}
-              </p>
-            ) : null}
-            {turn.answer ? (
-              <p
-                className={
-                  turn.answer === "(stopped)" ? "msg msg-bot msg-note" : "msg msg-bot"
-                }
-              >
-                {linkify(turn.answer)}
-              </p>
-            ) : null}
-            {phase === "thinking" && i === all.length - 1 ? (
-              <p className="think-ellipsis" aria-hidden="true">
-                ...
-              </p>
-            ) : null}
-          </article>
-        ))}
+        {messages.map((msg, i) => {
+          const same = i > 0 && messages[i - 1]!.role === msg.role;
+          if (msg.role === "user") {
+            return (
+              <div key={i} className={same ? "row row-user row-same" : "row row-user"}>
+                <p className="bubble bubble-user">
+                  <span className="sr-only">You: </span>
+                  {msg.content}
+                </p>
+              </div>
+            );
+          }
+          return (
+            <div key={i} className={same ? "row-same" : undefined}>
+              {msg.content.trim() ? (
+                <div className="row">
+                  <span className="avatar" aria-hidden="true">
+                    p
+                  </span>
+                  <div className="bubble bubble-bot">
+                    <span className="sr-only">Puma: </span>
+                    {formatAnswer(msg.content)}
+                  </div>
+                </div>
+              ) : null}
+              {msg.stopped ? <p className="bubble-note">stopped</p> : null}
+            </div>
+          );
+        })}
+        {phase === "thinking" ? (
+          <div className="row">
+            <span className="avatar" aria-hidden="true">
+              p
+            </span>
+            <div className="bubble bubble-bot" aria-hidden="true">
+              <span className="typing">
+                <span />
+                <span />
+                <span />
+              </span>
+            </div>
+          </div>
+        ) : null}
         <div ref={endRef} />
       </div>
       <div className="sr-only" aria-live="polite">
