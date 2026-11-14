@@ -1,6 +1,8 @@
+@layer ui-sdk;
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "@ui-sdk/core/web.css" layer(components);
 
 @custom-variant dark (&:is(.dark *));
 
@@ -55,6 +57,16 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --ui-background: var(--paper);
+  --ui-foreground: var(--ink);
+  --ui-muted: var(--pink-soft);
+  --ui-muted-foreground: var(--quiet);
+  --ui-border: var(--line);
+  --ui-input: var(--line);
+  --ui-primary: var(--pink);
+  --ui-primary-foreground: var(--pink-ink);
+  --ui-ring: var(--pink);
+  --ui-radius: 0.5rem;
 }
 
 /* Light is the default. Dark only applies when data-theme="dark" is set (for a future toggle). */
@@ -1061,5 +1073,381 @@ h2 {
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+}
+/* Infinite canvas (components/folio-canvas.tsx). */
+.canvas-page {
+  position: fixed;
+  inset: 0;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  touch-action: none;
+  outline: none;
+  cursor: grab;
+  background-color: var(--paper);
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    color-mix(in srgb, var(--quiet) 38%, transparent) 1px,
+    transparent 0
+  );
+  background-size: var(--grid-size, 24px) var(--grid-size, 24px);
+  background-position: var(--grid-x, 0) var(--grid-y, 0);
+}
+
+.canvas:active {
+  cursor: grabbing;
+}
+
+.canvas:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--pink);
+}
+
+.canvas-pane {
+  position: absolute;
+  inset: 0;
+  overflow: scroll;
+  scrollbar-width: none;
+  touch-action: none;
+  pointer-events: none;
+}
+
+.canvas-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  pointer-events: auto;
+  opacity: 0;
+  transition: opacity 240ms var(--ease-out);
+}
+
+.canvas[data-ready] .canvas-world {
+  opacity: 1;
+}
+
+.canvas-edges {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.edge {
+  fill: none;
+  stroke: color-mix(in srgb, var(--pink) 55%, var(--line));
+  stroke-width: 1.5;
+  stroke-dasharray: 6 6;
+  animation: edge-flow 900ms linear infinite;
+}
+
+.edge[data-hidden] {
+  visibility: hidden;
+}
+
+.edge[data-active] {
+  stroke: var(--pink);
+  stroke-width: 2;
+}
+
+@keyframes edge-flow {
+  to {
+    stroke-dashoffset: -12;
+  }
+}
+
+[data-slot="folio-canvas-node"] {
+  position: absolute;
+  width: 280px;
+  cursor: default;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper);
+  box-shadow:
+    0 1px 0 rgb(42 21 32 / 4%),
+    0 8px 24px -12px rgb(42 21 32 / 18%);
+  transition:
+    box-shadow 160ms var(--ease-out),
+    border-color 160ms var(--ease-out);
+}
+
+[data-slot="folio-canvas-node"]:focus-within {
+  border-color: color-mix(in srgb, var(--pink) 60%, var(--line));
+}
+
+[data-slot="folio-canvas-node"][data-dragging] {
+  z-index: 5;
+  user-select: none;
+  border-color: var(--pink);
+  box-shadow: 0 18px 40px -16px rgb(42 21 32 / 32%);
+}
+
+[data-slot="folio-canvas-node"][data-in]::before,
+[data-slot="folio-canvas-node"][data-out]::after {
+  content: "";
+  position: absolute;
+  top: 29px;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--pink);
+  border-radius: 50%;
+  background: var(--paper);
+}
+
+[data-slot="folio-canvas-node"][data-in]::before {
+  left: -6px;
+}
+
+[data-slot="folio-canvas-node"][data-out]::after {
+  right: -6px;
+}
+
+[data-slot="folio-canvas-node"][data-kind="profile"] {
+  width: 320px;
+  background: var(--pink-soft);
+}
+
+[data-slot="folio-canvas-node"][data-kind="agent"] {
+  width: 380px;
+}
+
+[data-slot="folio-canvas-node"][data-kind="agent"]:not([data-palm]) {
+  height: 560px;
+  display: flex;
+  flex-direction: column;
+}
+
+.node-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 32px;
+  padding: 0 0.6rem 0 0.25rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--quiet);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
+[data-slot="folio-canvas-handle"] {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--quiet);
+  font: inherit;
+  font-size: 0.7rem;
+  letter-spacing: -0.15em;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+[data-slot="folio-canvas-handle"]:hover {
+  background: color-mix(in srgb, var(--pink-soft) 70%, transparent);
+  color: var(--ink);
+}
+
+[data-slot="folio-canvas-node"][data-dragging] [data-slot="folio-canvas-handle"] {
+  cursor: grabbing;
+}
+
+.node-kind {
+  text-transform: lowercase;
+  font-family: var(--font-mono);
+}
+
+.node-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.75rem 0.9rem 0.85rem;
+}
+
+[data-kind="agent"]:not([data-palm]) .node-body {
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+}
+
+[data-kind="agent"]:not([data-palm]) .node-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.node-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+[data-kind="profile"] .node-title {
+  font-size: 1.35rem;
+}
+
+.node-tagline,
+.node-desc,
+.node-meta {
+  margin: 0;
+}
+
+.node-desc {
+  color: var(--quiet);
+}
+
+.node-meta {
+  color: var(--quiet);
+  font-size: 0.82rem;
+}
+
+.node-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  align-self: flex-start;
+  margin-top: 0.15rem;
+  color: var(--pink);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.node-link svg {
+  width: 0.9em;
+  height: 0.9em;
+}
+
+.node-link:hover {
+  text-decoration: underline;
+}
+
+.node-link.pending,
+.node-links .pending {
+  color: var(--quiet);
+  opacity: 0.6;
+}
+
+.node-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.node-links a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-underline-offset: 3px;
+}
+
+.node-links a:hover {
+  text-decoration-color: var(--pink);
+}
+
+.node-chat {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.node-chat .dock-embedded {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0.75rem 0.9rem 0.6rem;
+  border-radius: 0 0 14px 14px;
+  background: transparent;
+}
+
+.canvas-toolbar {
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.25rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 24px -14px rgb(42 21 32 / 30%);
+}
+
+.canvas-toolbar [data-slot="toolbar-button"] {
+  border-color: transparent;
+  background: transparent;
+}
+
+.canvas-toolbar [data-slot="toolbar-button"]:hover {
+  background: var(--pink-soft);
+}
+
+.canvas-toolbar [data-slot="toolbar-separator"] {
+  align-self: stretch;
+  margin: 0.25rem 0.2rem;
+}
+
+.canvas-zoom {
+  min-width: 3.2rem;
+  color: var(--quiet);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.canvas-help {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+  max-width: 22rem;
+  margin: 0;
+  color: var(--quiet);
+  font-size: 0.75rem;
+  text-align: right;
+  pointer-events: none;
+}
+
+@media (max-width: 879px) {
+  .canvas-help,
+  .canvas-zoom {
+    display: none;
+  }
+
+  .canvas-toolbar {
+    left: 1rem;
+    translate: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edge {
+    animation: none;
+  }
+
+  .canvas-world {
+    transition: none;
   }
 }

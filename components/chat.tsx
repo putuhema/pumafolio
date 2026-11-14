@@ -187,7 +187,6 @@ export function ChatDock({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
-  const endRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const titleId = useId();
   const menuId = useId();
@@ -210,7 +209,9 @@ export function ChatDock({
   const activeIndex = Math.min(menuIndex, Math.max(matches.length - 1, 0));
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end" });
+    // Scroll only the log: scrollIntoView also scrolls ancestors, which pans the canvas.
+    const log = logRef.current;
+    if (log) log.scrollTop = log.scrollHeight;
   }, [messages, phase]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
@@ -485,20 +486,22 @@ export function ChatDock({
               {fullscreen ? "collapse ↙" : "expand ↗"}
             </button>
           ) : null}
-          <button
-            type="button"
-            className="txtbtn"
-            aria-label={embedded ? "Hide chat" : "Close chat"}
-            onClick={() => {
-              if (embedded) {
-                onHide?.();
-                return;
-              }
-              setOpen(false);
-            }}
-          >
-            {embedded ? "hide" : "close"}
-          </button>
+          {embedded && !onHide ? null : (
+            <button
+              type="button"
+              className="txtbtn"
+              aria-label={embedded ? "Hide chat" : "Close chat"}
+              onClick={() => {
+                if (embedded) {
+                  onHide?.();
+                  return;
+                }
+                setOpen(false);
+              }}
+            >
+              {embedded ? "hide" : "close"}
+            </button>
+          )}
         </div>
       </header>
 
@@ -564,7 +567,6 @@ export function ChatDock({
             </div>
           </div>
         ) : null}
-        <div ref={endRef} />
       </div>
       <div className="sr-only" aria-live="polite">
         {phase === "thinking" ? "Puma is thinking" : latestAssistant}
@@ -674,7 +676,7 @@ export function ChatDock({
                 <span className="ask-spinner" />
               </>
             ) : embedded ? (
-              "esc to hide"
+              onHide ? "esc to hide" : null
             ) : (
               "esc to close"
             )}
