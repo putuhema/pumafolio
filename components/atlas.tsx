@@ -171,26 +171,27 @@ function Label({ node, time }: { node: GraphNode; time: string }) {
 
 /** Below this width the index is a bottom sheet. Keep in step with atlas.css. */
 const PHONE = "(max-width: 879px)";
-/** How much of the closed sheet shows, in px. Keep in step with --peek. */
-const PEEK = 112;
 
 type Pan = { x: number; y: number };
 
 function Graph({
   focus,
   selected,
+  panelOpen,
   onHot,
   onPick,
   time,
 }: {
   focus: string | null;
   selected: string | null;
+  /** Desktop only: the dialog is open, so the map slides left to make room. */
+  panelOpen: boolean;
   onHot: (id: string | null) => void;
-  onPick: (id: string | null) => void;
+  onPick: (id: string | null, byKey?: boolean) => void;
   time: string;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState({ w: 0, h: 0, panel: 0, bottom: 0 });
+  const [size, setSize] = useState({ w: 0, h: 0, panel: 0 });
   const [pan, setPan] = useState<Pan>({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const drag = useRef<{ id: number; x: number; y: number; from: Pan; moved: boolean } | null>(
@@ -206,9 +207,8 @@ function Graph({
       setSize({
         w: el.clientWidth,
         h: el.clientHeight,
-        // Desktop: the index docks on the right. Phones: its sheet peeks at the bottom.
+        // Desktop: room for the dialog on the right. Phones: the sheet covers the map.
         panel: !phone && panel ? panel.offsetWidth + 40 : 0,
-        bottom: phone ? PEEK : 0,
       });
     };
     measure();
@@ -217,13 +217,14 @@ function Graph({
     return () => ro.disconnect();
   }, []);
 
-  const areaW = Math.max(size.w - size.panel, 0);
-  const areaH = Math.max(size.h - size.bottom, 0);
-  const fit = Math.min(areaW / VIEW.width, areaH / (VIEW.height + 20));
+  // The zoom always leaves room for the dialog, so opening it only slides the map.
+  const roomW = Math.max(size.w - size.panel, 0);
+  const fit = Math.min(roomW / VIEW.width, size.h / (VIEW.height + 20));
   // Phones get a map wider than the screen, panned by finger, so labels stay readable.
   const scale = Math.min(Math.max(fit, size.panel ? 0.66 : 0.6), 1.25);
+  const areaW = panelOpen ? roomW : size.w;
   const tx = areaW / 2 - VIEW.cx * scale + pan.x;
-  const ty = areaH / 2 - VIEW.cy * scale + pan.y;
+  const ty = size.h / 2 - VIEW.cy * scale + pan.y;
 
   const lit = useMemo(() => (focus ? neighbourhood(focus) : null), [focus]);
 
@@ -279,9 +280,14 @@ function Graph({
       onDoubleClick={() => setPan({ x: 0, y: 0 })}
       style={{ "--zoom": scale, "--gk": Math.max(1, 0.9 / scale).toFixed(3) } as CSSProperties}
     >
-      <svg aria-hidden="true" width="100%" height="100%">
-        <g transform={`translate(${tx.toFixed(1)} ${ty.toFixed(1)}) scale(${scale.toFixed(3)})`}>
-          <g className="edges">
+      <svg role="group" aria-label="Map of work and links" width="100%" height="100%">
+        <g
+          className="world"
+          style={{
+            transform: `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${scale.toFixed(3)})`,
+          }}
+        >
+          <g className="edges" aria-hidden="true">
             {EDGES.map((edge) => {
               const on = focus !== null && (edge.from === focus || edge.to === focus);
               return (
@@ -307,15 +313,27 @@ function Graph({
               data-lit={lit?.has(node.id) ? "" : undefined}
               data-selected={selected === node.id ? "" : undefined}
               transform={`translate(${node.x} ${node.y})`}
+              role="button"
+              tabIndex={0}
+              aria-label={node.kind === "root" ? `${node.label}, profile` : node.label}
               onPointerEnter={() => onHot(node.id)}
               onPointerLeave={() => onHot(null)}
+              onFocus={() => onHot(node.id)}
+              onBlur={() => onHot(null)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                onPick(node.id, true);
+              }}
             >
               <g className="node-in" style={{ "--d": depthOf(node.id) } as CSSProperties}>
                 <circle className="g-hit" r="24" />
                 <g className="g-glyph">
                   <Glyph node={node} />
                 </g>
-                <Label node={node} time={time} />
+                <g aria-hidden="true">
+                  <Label node={node} time={time} />
+                </g>
               </g>
             </g>
           ))}
@@ -325,7 +343,7 @@ function Graph({
   );
 }
 
-/* ---------- Index panel ---------- */
+/* ---------- Dialog / sheet content ---------- */
 
 type Section = { key: SectionKey; title: string; kind: NodeKind };
 
@@ -338,106 +356,9 @@ const SECTIONS: Section[] = [
   { key: "saved", title: "Saved", kind: "page" },
 ];
 
-function Fold({
-  id,
-  title,
-  mark,
-  open,
-  onToggle,
-  children,
-}: {
-  id: string;
-  title: string;
-  mark: NodeKind | "index";
-  open: boolean;
-  onToggle: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <section className="fold" data-open={open ? "" : undefined}>
-      <h2 className="fold-head">
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-controls={`fold-${id}`}
-          onClick={onToggle}
-        >
-          <Mark kind={mark} />
-          <span className="fold-title">{title}</span>
-          <span className="fold-sign" aria-hidden="true">
-            {open ? "−" : "+"}
-          </span>
-        </button>
-      </h2>
-      <div className="fold-body" id={`fold-${id}`} hidden={!open}>
-        {children}
-      </div>
-    </section>
-  );
-}
-
-function Row({
-  node,
-  active,
-  onHot,
-  children,
-}: {
-  node: GraphNode;
-  active: boolean;
-  onHot: (id: string | null) => void;
-  children: ReactNode;
-}) {
-  return (
-    <li
-      className="row-item"
-      data-row={node.id}
-      data-active={active ? "" : undefined}
-      data-faint={node.faint ? "" : undefined}
-      onPointerEnter={() => onHot(node.id)}
-      onPointerLeave={() => onHot(null)}
-      onFocus={() => onHot(node.id)}
-      onBlur={() => onHot(null)}
-    >
-      {children}
-    </li>
-  );
-}
-
-function Entry({ node }: { node: GraphNode }) {
-  const external = node.href?.startsWith("http");
-  return (
-    <>
-      <span className="entry-text">
-        <span className="entry-name">
-          {node.n ? <span className="entry-n">{node.n}</span> : null}
-          {node.label}
-        </span>
-        {node.blurb ? <span className="entry-blurb">{node.blurb}</span> : null}
-      </span>
-      {node.href ? (
-        <a
-          className="entry-go"
-          href={node.href}
-          target={external ? "_blank" : undefined}
-          rel={external ? "me noreferrer" : undefined}
-        >
-          {node.kind === "link" ? "Open" : "View"}
-          <span className="sr-only"> {node.label}</span>
-          <ArrowUpRightIcon aria-hidden="true" />
-        </a>
-      ) : node.href === null ? (
-        <span className="entry-go entry-locked" title="Private repo, no public link">
-          <LockIcon aria-hidden="true" />
-          Private
-        </span>
-      ) : null}
-    </>
-  );
-}
-
 const byKind = (kind: NodeKind) => NODES.filter((node) => node.kind === kind);
 
-/* ---------- Phone sheet: one view at a time ---------- */
+/* One view at a time: the profile, a section, or a single node. */
 
 type View =
   | { kind: "index" }
@@ -524,6 +445,7 @@ function Facts({ time }: { time: string }) {
 }
 
 function NavRow({
+  id,
   mark,
   title,
   sub,
@@ -531,6 +453,7 @@ function NavRow({
   faint,
   onClick,
 }: {
+  id?: string;
   mark: NodeKind | "index";
   title: string;
   sub?: string;
@@ -543,6 +466,7 @@ function NavRow({
       <button
         type="button"
         className="nav-row"
+        data-row={id}
         data-faint={faint ? "" : undefined}
         onClick={onClick}
       >
@@ -568,6 +492,7 @@ function NodeList({ nodes, onGo }: { nodes: GraphNode[]; onGo: (view: View) => v
       {nodes.map((node) => (
         <NavRow
           key={node.id}
+          id={node.id}
           mark={node.kind}
           title={node.label}
           sub={node.blurb}
@@ -584,7 +509,9 @@ function ViewHead({ kicker, title, blurb }: { kicker?: string; title: string; bl
   return (
     <header className="view-head">
       {kicker ? <p className="view-kicker">{kicker}</p> : null}
-      <h2 className="view-title">{title}</h2>
+      <h2 className="view-title" tabIndex={-1}>
+        {title}
+      </h2>
       {blurb ? <p className="view-blurb">{blurb}</p> : null}
     </header>
   );
@@ -706,327 +633,184 @@ export function Atlas({
   const time = useWitaTime();
   const [hot, setHot] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
-  const [indexOpen, setIndexOpen] = useState(true);
-  const [more, setMore] = useState(false);
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const sheetRef = useRef<HTMLElement>(null);
-  const handleRef = useRef<HTMLButtonElement>(null);
+  // Null while nothing is picked: the dialog (or sheet) is hidden.
+  const [trail, setTrail] = useState<View[] | null>(null);
+  const panelRef = useRef<HTMLElement>(null);
+  const [lastView, setLastView] = useState<View>(INDEX_TRAIL[0]!);
+  const byKey = useRef(false);
   const sheetDrag = useRef<{ id: number; y: number; dy: number } | null>(null);
-  const barDragged = useRef(false);
-  // Phones: the sheet shows one thing at a time, with a trail back to the index.
-  const [trail, setTrail] = useState<View[]>(INDEX_TRAIL);
-  const view = trail[trail.length - 1]!;
-
-  const isPhone = () => window.matchMedia(PHONE).matches;
-
-  const showSheet = useCallback((next: boolean) => {
-    setSheetOpen(next);
-    const sheet = sheetRef.current;
-    if (sheet && !next) sheet.scrollTop = 0;
-  }, []);
-  const [open, setOpen] = useState<Set<SectionKey>>(
-    () => new Set(initialSection ? [initialSection] : []),
+  const phone = useSyncExternalStore(
+    subscribePhone,
+    () => window.matchMedia(PHONE).matches,
+    () => false,
   );
 
-  // Deep links: /#work opens that fold. Older links (#profile, #contact) still land.
+  const open = trail !== null;
+  // While the dialog animates out it keeps showing the last view.
+  const view = trail ? trail[trail.length - 1]! : lastView;
+  useEffect(() => {
+    if (trail) setLastView(trail[trail.length - 1]!);
+  }, [trail]);
+
+  // Deep links: /#work and /saved open on that section; older #profile and #contact land too.
   useEffect(() => {
     const hash = window.location.hash.slice(1);
-    const key = hash === "contact" ? "elsewhere" : hash;
-    if (hash === "profile") setMore(true);
-    const landing = isSectionKey(key) ? key : initialSection;
-    if (landing && isPhone()) {
-      setTrail([...INDEX_TRAIL, { kind: "section", key: landing }]);
-      setSheetOpen(true);
-    }
-    if (isSectionKey(key)) {
-      setOpen((prev) => new Set(prev).add(key));
-      requestAnimationFrame(() =>
-        document.getElementById(`fold-${key}`)?.parentElement?.scrollIntoView({ block: "nearest" }),
-      );
-    }
-  }, [initialSection]);
-
-  const toggle = useCallback((key: SectionKey) => {
-    setOpen((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      const hash = next.has(key) ? `#${key}` : window.location.pathname;
-      window.history.replaceState(window.history.state, "", hash);
-      return next;
-    });
-  }, []);
-
-  const pick = useCallback((id: string | null) => {
-    setSelected(id);
-    setTrail(id && id !== "root" ? [...INDEX_TRAIL, { kind: "node", id }] : INDEX_TRAIL);
-    if (!id) return;
-    const node = nodeById(id);
-    if (!node) return;
-    if (node.section === "index") {
-      setIndexOpen(true);
-      setMore(true);
-    } else {
-      const section = node.section;
-      setOpen((prev) => new Set(prev).add(section));
-    }
-    // On phones a tap opens the sheet straight to that node.
-    if (isPhone()) {
-      setSheetOpen(true);
+    if (hash === "profile") {
+      setTrail(INDEX_TRAIL);
       return;
     }
-    requestAnimationFrame(() => {
-      const target =
-        document.querySelector<HTMLElement>(`[data-row="${id}"]`) ??
-        document.getElementById(node.section === "index" ? "index-bio" : `fold-${node.section}`);
-      target?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    const key = hash === "contact" ? "elsewhere" : hash;
+    const landing = isSectionKey(key) ? key : initialSection;
+    if (landing) setTrail([...INDEX_TRAIL, { kind: "section", key: landing }]);
+  }, [initialSection]);
+
+  const close = useCallback(() => {
+    setTrail(null);
+    setSelected((was) => {
+      if (was && byKey.current) {
+        document.querySelector<SVGGElement>(`[data-node="${was}"]`)?.focus();
+      }
+      return null;
     });
+    if (window.location.hash) {
+      window.history.replaceState(window.history.state, "", window.location.pathname);
+    }
   }, []);
+
+  const pick = useCallback(
+    (id: string | null, viaKey = false) => {
+      if (!id) return close();
+      byKey.current = viaKey;
+      setSelected(id);
+      setTrail(id === "root" ? INDEX_TRAIL : [...INDEX_TRAIL, { kind: "node", id }]);
+    },
+    [close],
+  );
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (event.key !== "Escape") return;
-      setSelected(null);
-      setTrail(INDEX_TRAIL);
-      setSheetOpen((wasOpen) => {
-        if (wasOpen) handleRef.current?.focus();
-        return false;
-      });
+      if (event.key === "Escape" && !event.defaultPrevented) close();
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, []);
+  }, [close]);
 
-  const focus = hot ?? selected;
-  const phone = useSyncExternalStore(subscribePhone, () => window.matchMedia(PHONE).matches, () => false);
-  const shut = phone && !sheetOpen;
-  const pickedNode = selected ? nodeById(selected) : undefined;
-
-  // Each view starts at its top.
+  // Each view starts at its top; keyboard users land on its heading.
   useEffect(() => {
-    if (sheetRef.current && phone) sheetRef.current.scrollTop = 0;
-  }, [view, phone]);
+    const panel = panelRef.current;
+    if (!panel || !trail) return;
+    panel.scrollTop = 0;
+    if (byKey.current) panel.querySelector<HTMLElement>(".view-title")?.focus();
+  }, [trail]);
 
   function go(next: View) {
-    setTrail((prev) => [...prev, next]);
+    setTrail((prev) => [...(prev ?? INDEX_TRAIL), next]);
     if (next.kind === "node") setSelected(next.id);
   }
 
   function back() {
-    setTrail((prev) => {
-      const next = prev.length > 1 ? prev.slice(0, -1) : prev;
-      const top = next[next.length - 1]!;
-      setSelected(top.kind === "node" ? top.id : null);
-      return next;
-    });
+    if (!trail || trail.length < 2) return;
+    const next = trail.slice(0, -1);
+    const top = next[next.length - 1]!;
+    setTrail(next);
+    setSelected(top.kind === "node" ? top.id : top.kind === "index" ? "root" : null);
   }
 
-  function onBarDown(event: ReactPointerEvent<HTMLButtonElement>) {
-    if (event.button !== 0) return;
+  // Phones: pull the sheet down by its header to put it away.
+  function onHeadDown(event: ReactPointerEvent<HTMLElement>) {
+    if (!phone || event.button !== 0) return;
+    if ((event.target as Element).closest("button")) return;
     sheetDrag.current = { id: event.pointerId, y: event.clientY, dy: 0 };
   }
 
-  function onBarMove(event: ReactPointerEvent<HTMLButtonElement>) {
+  function onHeadMove(event: ReactPointerEvent<HTMLElement>) {
     const d = sheetDrag.current;
-    const sheet = sheetRef.current;
-    if (!d || d.id !== event.pointerId || !sheet) return;
-    d.dy = event.clientY - d.y;
-    if (Math.abs(d.dy) < 6) return;
+    const panel = panelRef.current;
+    if (!d || d.id !== event.pointerId || !panel) return;
+    d.dy = Math.max(event.clientY - d.y, 0);
+    if (d.dy < 6) return;
     if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
       try {
         event.currentTarget.setPointerCapture(event.pointerId);
       } catch {
-        // The pointer already ended; the drag still settles on pointerup.
+        // The pointer already ended; pointerup still settles it.
       }
     }
-    sheet.dataset.dragging = "";
-    // Follow the finger, but not past either resting place.
-    const room = sheet.offsetHeight - PEEK;
-    const dy = sheetOpen ? Math.min(Math.max(d.dy, 0), room) : Math.max(Math.min(d.dy, 0), -room);
-    sheet.style.setProperty("--drag", `${dy}px`);
+    panel.dataset.dragging = "";
+    panel.style.setProperty("--drag", `${d.dy}px`);
   }
 
-  function onBarUp() {
+  function onHeadUp() {
     const d = sheetDrag.current;
-    const sheet = sheetRef.current;
+    const panel = panelRef.current;
     sheetDrag.current = null;
-    if (!d || !sheet) return;
-    delete sheet.dataset.dragging;
-    sheet.style.removeProperty("--drag");
-    if (Math.abs(d.dy) < 6) return;
-    // A real drag decides by direction; the click that follows is ignored.
-    barDragged.current = true;
-    if (d.dy < -40) showSheet(true);
-    else if (d.dy > 40) showSheet(false);
+    if (!d || !panel) return;
+    delete panel.dataset.dragging;
+    panel.style.removeProperty("--drag");
+    if (d.dy > 80) close();
   }
 
-  const shown = sheetOpen ? view : pickedNode ? ({ kind: "node", id: pickedNode.id } as View) : view;
-  const barTitle = viewTitle(shown);
-  const barMark = viewMark(shown);
-
-  function rows(nodes: GraphNode[]) {
-    return (
-      <ul className="rows">
-        {nodes.map((node) => (
-          <Row key={node.id} node={node} active={focus === node.id} onHot={setHot}>
-            <Entry node={node} />
-          </Row>
-        ))}
-      </ul>
-    );
-  }
-
-  function body(key: SectionKey) {
-    switch (key) {
-      case "work":
-        return rows(byKind("work"));
-      case "quests":
-        return rows(byKind("quest"));
-      case "elsewhere":
-        return (
-          <>
-            {rows(LINKS)}
-            <p className="fold-note">
-              CV {site.cv.href ? <a href={site.cv.href}>PDF</a> : "coming soon"}.
-            </p>
-          </>
-        );
-      case "paths":
-        return rows(PATHS);
-      case "puma":
-        return (
-          <div
-            className="puma-fold"
-            data-row="puma"
-            onPointerEnter={() => setHot("puma")}
-            onPointerLeave={() => setHot(null)}
-          >
-            <ChatDock embedded titleHidden />
-          </div>
-        );
-      case "saved":
-        return (
-          <div
-            data-row="saved"
-            onPointerEnter={() => setHot("saved")}
-            onPointerLeave={() => setHot(null)}
-          >
-            <SavedArticles initial={savedLinks} />
-          </div>
-        );
-    }
-  }
+  const focus = hot ?? selected;
 
   return (
-    <div className="atlas" data-sheet={sheetOpen ? "open" : "peek"}>
-      <Graph focus={focus} selected={selected} onHot={setHot} onPick={pick} time={time} />
+    <div className="atlas" data-panel={open ? "open" : "closed"}>
+      <h1 className="sr-only">
+        {site.name}, full-stack &amp; AI engineer
+      </h1>
 
-      <div className="sheet-scrim" aria-hidden="true" onClick={() => showSheet(false)} />
+      <Graph
+        focus={focus}
+        selected={selected}
+        panelOpen={open && !phone}
+        onHot={setHot}
+        onPick={pick}
+        time={time}
+      />
 
-      <aside
-        ref={sheetRef}
+      <div className="sheet-scrim" aria-hidden="true" onClick={close} />
+
+      <section
+        ref={panelRef}
         className="index"
-        aria-label="Index"
-        data-open={sheetOpen ? "" : undefined}
+        role="dialog"
+        aria-modal={phone ? true : undefined}
+        aria-labelledby="panel-title"
+        data-open={open ? "" : undefined}
+        inert={open ? undefined : true}
+        onPointerOver={(event) => {
+          const row = (event.target as Element).closest<HTMLElement>("[data-row]");
+          setHot(row?.dataset.row ?? null);
+        }}
+        onPointerLeave={() => setHot(null)}
       >
-        <h1 className="sr-only">
-          {site.name}, full-stack &amp; AI engineer
-        </h1>
-        <button
-          ref={handleRef}
-          type="button"
-          className="sheet-bar"
-          aria-expanded={sheetOpen}
-          aria-controls="index-body"
-          onPointerDown={onBarDown}
-          onPointerMove={onBarMove}
-          onPointerUp={onBarUp}
-          onPointerCancel={onBarUp}
-          onClick={() => {
-            if (barDragged.current) {
-              barDragged.current = false;
-              return;
-            }
-            showSheet(!sheetOpen);
-          }}
+        <header
+          className="panel-head"
+          onPointerDown={onHeadDown}
+          onPointerMove={onHeadMove}
+          onPointerUp={onHeadUp}
+          onPointerCancel={onHeadUp}
         >
           <span className="sheet-grip" aria-hidden="true" />
-          <span className="sheet-line">
-            <Mark kind={barMark} />
-            <span className="sheet-title">{barTitle}</span>
-            <span className="sheet-sub">
-              {pickedNode?.blurb ?? (pickedNode ? "About him" : `${site.name} · full-stack & AI engineer`)}
+          <span className="panel-line">
+            <Mark kind={viewMark(view)} />
+            <span className="panel-title" id="panel-title">
+              {viewTitle(view)}
             </span>
-            <span className="sheet-sign" aria-hidden="true">
-              {sheetOpen ? "Close" : "Open"}
-            </span>
+            <button type="button" className="panel-close" onClick={close}>
+              Close
+            </button>
           </span>
-        </button>
-        <div className="index-body" id="index-body" inert={shut ? true : undefined}>
-          {phone ? (
-            <SheetView
-              view={view}
-              canGoBack={trail.length > 1}
-              backTo={trail.length > 1 ? viewTitle(trail[trail.length - 2]!) : ""}
-              onBack={back}
-              onGo={go}
-              time={time}
-              savedLinks={savedLinks}
-            />
-          ) : (
-          <>
-          <section className="fold fold-index" data-open={indexOpen ? "" : undefined}>
-            <h2 className="fold-head">
-              <button
-                type="button"
-                aria-expanded={indexOpen}
-                aria-controls="index-bio"
-                onClick={() => setIndexOpen((v) => !v)}
-                onPointerEnter={() => setHot("root")}
-                onPointerLeave={() => setHot(null)}
-              >
-                <Mark kind="index" />
-                <span className="fold-title">Index</span>
-                <span className="fold-sign" aria-hidden="true">
-                  {indexOpen ? "−" : "+"}
-                </span>
-              </button>
-            </h2>
-            <div className="fold-body" id="index-bio" hidden={!indexOpen}>
-              <p className="bio">
-                {site.name} is a full-stack &amp; AI engineer in Mamuju, Indonesia. He
-                builds safe AI tools for hospital data: read-only tools, guarded SQL,
-                and a person who approves every fix.{" "}
-                <button
-                  type="button"
-                  className="bio-more"
-                  aria-expanded={more}
-                  onClick={() => setMore((v) => !v)}
-                >
-                  {more ? "less information" : "more information"}
-                </button>
-                .
-              </p>
-              {more ? <Facts time={time} /> : null}
-            </div>
-          </section>
-
-          {SECTIONS.map((section) => (
-            <Fold
-              key={section.key}
-              id={section.key}
-              title={section.title}
-              mark={section.kind}
-              open={open.has(section.key)}
-              onToggle={() => toggle(section.key)}
-            >
-              {body(section.key)}
-            </Fold>
-          ))}
-          </>
-          )}
-        </div>
-      </aside>
+        </header>
+        <SheetView
+          view={view}
+          canGoBack={(trail?.length ?? 0) > 1}
+          backTo={trail && trail.length > 1 ? viewTitle(trail[trail.length - 2]!) : ""}
+          onBack={back}
+          onGo={go}
+          time={time}
+          savedLinks={savedLinks}
+        />
+      </section>
     </div>
   );
 }
