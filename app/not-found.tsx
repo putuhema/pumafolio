@@ -8,11 +8,15 @@ export const metadata: Metadata = {
 
 export default function NotFound() {
   return (
-    <main className="not-found">
-      <h1>nothing here</h1>
-      <p>
-        <Link href="/">back</Link>
-      </p>
+    <main className="atlas atlas-lost">
+      <div>
+        <svg width="34" height="34" viewBox="-17 -17 34 34" aria-hidden="true">
+          <circle r="12" fill="none" stroke="currentColor" strokeDasharray="3 3" />
+        </svg>
+        <h1>No node here</h1>
+        <p>This page isn&rsquo;t on the map.</p>
+        <Link href="/">Back to the map</Link>
+      </div>
     </main>
   );
 }

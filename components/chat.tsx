@@ -165,8 +165,11 @@ export function ChatDock({
   onHide,
   fullscreen = false,
   onToggleFullscreen,
+  titleHidden = false,
 }: {
   embedded?: boolean;
+  /** The screen around the chat already names it. */
+  titleHidden?: boolean;
   onHide?: () => void;
   fullscreen?: boolean;
   onToggleFullscreen?: () => void;
@@ -473,7 +476,7 @@ export function ChatDock({
 
   const body = (
     <>
-      <header className="dock-head">
+      <header className={titleHidden ? "dock-head sr-only" : "dock-head"}>
         {embedded ? title : <DrawerTitle asChild>{title}</DrawerTitle>}
         <div className="dock-actions">
           {embedded && onToggleFullscreen ? (

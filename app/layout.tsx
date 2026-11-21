@@ -2,7 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
+import "@fontsource/ibm-plex-mono/400.css";
 import "./globals.css";
+import "./atlas.css";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -49,10 +51,13 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#fdf7f9",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f3f2ee" },
+    { media: "(prefers-color-scheme: dark)", color: "#141413" },
+  ],
   width: "device-width",
   initialScale: 1,
-  colorScheme: "light",
+  colorScheme: "light dark",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

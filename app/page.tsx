@@ -1,4 +1,5 @@
-import { FolioCanvas } from "@/components/folio-canvas";
+import { Atlas } from "@/components/atlas";
+import { getSavedLinks } from "@/lib/saved-links";
 import { site } from "@/lib/site";
 
 const jsonLd = {
@@ -26,23 +27,17 @@ const jsonLd = {
   ],
 };
 
-export default function Home() {
+export default async function Home() {
+  const links = await getSavedLinks();
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <main className="canvas-page">
-        <FolioCanvas />
+      <main>
+        <Atlas savedLinks={links} />
       </main>
-      <noscript>
-        <style>{`.canvas-world{opacity:1!important}`}</style>
-        <p className="noscript">
-          Ask Puma and moving the canvas need JavaScript. The rest of this
-          page does not.
-        </p>
-      </noscript>
     </>
   );
 }

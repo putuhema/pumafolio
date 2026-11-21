@@ -29,6 +29,9 @@ export const site = {
   linkedin: "https://www.linkedin.com/in/putuhema",
   cv: { href: null as string | null },
   stack: "TypeScript, React, Next.js, Node, Postgres, Claude & OpenAI APIs",
+  role: "IT Support at RSUD Mamuju Tengah, since April 2025",
+  timezone: "WITA (UTC+8)",
+  availability: "Open to remote, hybrid or relocating",
   work: [
     {
       slug: "simha",

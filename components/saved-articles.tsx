@@ -3,7 +3,7 @@
 import { ConvexProvider, ConvexReactClient, useQuery } from "convex/react";
 import { anyApi } from "convex/server";
 
-type Link = {
+export type SavedLink = {
   id: string;
   url: string;
   title: string;
@@ -36,7 +36,7 @@ function initial(site: string) {
   return name.charAt(0);
 }
 
-function Bookmarks({ links }: { links: Link[] }) {
+function Bookmarks({ links }: { links: SavedLink[] }) {
   if (links.length === 0) {
     return <p className="saved-note">Nothing saved yet.</p>;
   }
@@ -70,14 +70,14 @@ function Bookmarks({ links }: { links: Link[] }) {
   );
 }
 
-function Live({ initial }: { initial: Link[] }) {
+function Live({ initial }: { initial: SavedLink[] }) {
   // Until the socket connects, show what the server sent; no loading state.
-  const live = useQuery(anyApi.links.list, {}) as Link[] | undefined;
+  const live = useQuery(anyApi.links.list, {}) as SavedLink[] | undefined;
   return <Bookmarks links={live ?? initial} />;
 }
 
 /** Saved articles, newest first: server-rendered, then live from Convex. */
-export function SavedArticles({ initial }: { initial: Link[] }) {
+export function SavedArticles({ initial }: { initial: SavedLink[] }) {
   if (!client) return <Bookmarks links={initial} />;
   return (
     <ConvexProvider client={client}>
